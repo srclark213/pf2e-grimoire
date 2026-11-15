@@ -1,3 +1,4 @@
+import { extractFacets } from "../../src/spellbook/facets.ts";
 import type { ActorSnapshot, EntrySnapshot, SlotRankSnapshot, SpellSnapshot } from "../../src/spellbook/model.ts";
 
 /** Builders for snapshots shaped like what the adapter reads off a pf2e actor. */
@@ -17,6 +18,7 @@ export function spell(name: string, overrides: Partial<SpellSnapshot> = {}): Spe
         isFocus: false,
         signature: false,
         uses: null,
+        facets: extractFacets({}),
         ...overrides,
     };
 }

@@ -1,3 +1,5 @@
+import type { SpellFacets } from "./facets.ts";
+
 /**
  * Plain data shapes used by the spellbook logic. Nothing here touches Foundry, so the logic that
  * works on these types can be unit-tested in Node. `src/foundry/snapshot.ts` builds them from a real actor.
@@ -41,6 +43,8 @@ export interface SpellSnapshot {
     signature: boolean;
     /** Innate spell uses per day. Null when the spell has none recorded. */
     uses: UsesSnapshot | null;
+    /** Filterable facts from the spell's data */
+    facets: SpellFacets;
 }
 
 export interface PreparedSlotSnapshot {
@@ -121,6 +125,8 @@ export interface SpellRow {
     baseRank: number;
     isCantrip: boolean;
     isFocus: boolean;
+    /** Filterable facts, from the first merged spell */
+    facets: SpellFacets;
     /** Spell item ids on the actor that this row merges */
     spellIds: string[];
     sources: SpellSource[];

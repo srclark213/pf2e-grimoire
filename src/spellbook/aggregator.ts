@@ -77,6 +77,7 @@ function getOrCreateRow(rows: Map<string, SpellRow>, spell: SpellSnapshot): Spel
         baseRank: 0,
         isCantrip: spell.isCantrip,
         isFocus: spell.isFocus,
+        facets: spell.facets,
         spellIds: [],
         sources: [],
         castOptions: [],

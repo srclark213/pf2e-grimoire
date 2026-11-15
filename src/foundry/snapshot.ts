@@ -1,5 +1,6 @@
 import type { CharacterPF2e } from "@actor";
 import type { SpellPF2e } from "@item";
+import { extractFacets, type SpellSystemSource } from "../spellbook/facets.ts";
 import type { ActorSnapshot, EntryCategory, EntrySnapshot, SlotRankSnapshot, SpellSnapshot } from "../spellbook/model.ts";
 
 const CATEGORIES: readonly EntryCategory[] = ["prepared", "spontaneous", "innate", "focus"];
@@ -54,5 +55,6 @@ function snapshotSpell(spell: SpellPF2e): SpellSnapshot {
         isFocus: spell.isFocusSpell,
         signature: !!spell.system.location.signature,
         uses: uses ? { value: uses.value ?? 0, max: uses.max ?? 0 } : null,
+        facets: extractFacets(spell.system as unknown as SpellSystemSource),
     };
 }
