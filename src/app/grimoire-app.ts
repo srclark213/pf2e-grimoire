@@ -3,6 +3,7 @@ import type { ItemPF2e } from "@item";
 import { flushSync, mount, unmount } from "svelte";
 import { MODULE_ID } from "../constants.ts";
 import { castOption } from "../foundry/cast.ts";
+import { repairWand } from "../foundry/wands.ts";
 import { loadCollapsed, loadFilter, saveCollapsed, saveFilter } from "../foundry/filter-store.ts";
 import type { ChipGroup, FilterState } from "../spellbook/filter.ts";
 import { snapshotActor } from "../foundry/snapshot.ts";
@@ -81,6 +82,7 @@ export class GrimoireApp extends ApplicationV2 {
                     setFilter: (filter: FilterState) => this.#setFilter(filter),
                     setCollapsed: (collapsed: ChipGroup[]) => this.#setCollapsed(collapsed),
                     setTags: (spellIds: string[], tags: string[]) => this.#setTags(spellIds, tags),
+                    repairWand: (wandId: string) => repairWand(this.actor, wandId),
                 },
             });
             flushSync();

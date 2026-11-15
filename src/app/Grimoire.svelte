@@ -17,9 +17,10 @@
         setFilter: (filter: FilterState) => void;
         setCollapsed: (collapsed: ChipGroup[]) => void;
         setTags: (spellIds: string[], tags: string[]) => Promise<void>;
+        repairWand: (wandId: string) => Promise<void>;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
@@ -138,6 +139,10 @@
             options={menu.button.options}
             defaultOption={menu.button.available ? menu.button.option : null}
             {choose}
+            repair={async (wandId) => {
+                menu = null;
+                await repairWand(wandId);
+            }}
             close={() => (menu = null)}
         />
     {/if}

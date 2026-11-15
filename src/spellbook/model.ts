@@ -89,6 +89,12 @@ export interface ConsumableSnapshot {
     quantity: number;
     /** Some spellcasting entry can cast it, or the character has Trick Magic Item */
     castable: boolean;
+    /** Castable only through Trick Magic Item. pf2e can't cast an overcharge that way, so none is offered. */
+    viaTrickMagicItem: boolean;
+    /** Wands only: broken by an overcharge and not yet repaired */
+    broken: boolean;
+    /** Wands only: overcharged since the character last rested */
+    overchargedToday: boolean;
 }
 
 export interface ActorSnapshot {
@@ -108,10 +114,12 @@ export type CastCost =
     | { type: "innate"; value: number; max: number }
     | { type: "focus"; value: number }
     | { type: "wand"; value: number; max: number }
-    | { type: "scroll"; quantity: number };
+    | { type: "scroll"; quantity: number }
+    /** `destroys`: the wand was already overcharged today, so this destroys it with no spell */
+    | { type: "overcharge"; destroys: boolean };
 
 /** Why an option can't be cast right now */
-export type UnavailableReason = "expended" | "no-slots" | "no-uses" | "no-focus" | "cannot-cast";
+export type UnavailableReason = "expended" | "no-slots" | "no-uses" | "no-focus" | "cannot-cast" | "broken";
 
 /** One way to cast a spell right now, at one rank */
 export interface CastOption {

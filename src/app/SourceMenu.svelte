@@ -9,10 +9,12 @@
         /** The option a plain click would cast, marked in the list */
         defaultOption: CastOption | null;
         choose: (option: CastOption) => void;
+        /** Clears a broken wand's mark */
+        repair: (wandId: string) => void;
         close: () => void;
     }
 
-    const { x, y, rank, options, defaultOption, choose, close }: Props = $props();
+    const { x, y, rank, options, defaultOption, choose, repair, close }: Props = $props();
 
     let menu: HTMLElement | undefined = $state();
 
@@ -54,6 +56,8 @@
                 return t("Cost.Wand", { value: cost.value, max: cost.max });
             case "scroll":
                 return t("Cost.Scroll", { quantity: cost.quantity });
+            case "overcharge":
+                return t(cost.destroys ? "Cost.OverchargeRepeat" : "Cost.Overcharge");
         }
     }
 </script>
@@ -68,7 +72,10 @@
             class:default={option === defaultOption}
             onclick={() => choose(option)}
         >
-            <span class="source">{option.entryName}</span>
+            <span class="source">
+                {#if option.kind === "wand-overcharge"}<i class="fa-solid fa-bolt"></i>{/if}
+                {option.entryName}
+            </span>
             <span class="cost">{costText(option)}</span>
             {#if !option.available && option.reason}
                 <span class="reason">{t(`Reason.${option.reason}`, { rank: option.rank })}</span>
@@ -76,6 +83,11 @@
                 <span class="reason">{t("DefaultPick")}</span>
             {/if}
         </button>
+        {#if option.reason === "broken"}
+            <button type="button" role="menuitem" class="repair" onclick={() => repair(option.entryId)}>
+                <span class="source"><i class="fa-solid fa-hammer"></i> {t("Overcharge.Repair")}</span>
+            </button>
+        {/if}
     {/each}
 </div>
 
@@ -102,9 +114,9 @@
     button {
         all: unset;
         box-sizing: border-box;
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 0 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.05rem;
         width: 100%;
         padding: 0.3rem 0.4rem;
         border-radius: 4px;
@@ -121,13 +133,15 @@
     button.default .source {
         font-weight: bold;
     }
-    .cost {
+    button.repair {
+        padding-left: 1.2rem;
         font-size: 0.85em;
-        text-align: right;
+    }
+    .cost {
+        font-size: 0.8em;
         opacity: 0.85;
     }
     .reason {
-        grid-column: 1 / -1;
         font-size: 0.75em;
         opacity: 0.75;
         font-style: italic;

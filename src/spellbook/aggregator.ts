@@ -1,4 +1,6 @@
+import { isAutoPickable } from "./cast-resolver.ts";
 import { categorize } from "./categories.ts";
+import { canOvercharge } from "./overcharge.ts";
 import { uniqueTags } from "./tags.ts";
 import type {
     ActorSnapshot,
@@ -58,9 +60,11 @@ export function aggregateSpells(actor: ActorSnapshot): SpellRow[] {
         const ranks = fixedRanks.get(row.key);
         row.baseRank = ranks ? Math.min(...ranks) : 0;
         row.castOptions.sort((a, b) => a.rank - b.rank);
-        row.available = row.castOptions.some((o) => o.available);
+        // Overcharging is a last resort, so it doesn't make a row or badge look ready to cast.
+        const ready = row.castOptions.filter((o) => o.available && isAutoPickable(o));
+        row.available = ready.length > 0;
         for (const source of row.sources) {
-            source.available = row.castOptions.some((o) => o.entryId === source.entryId && o.available);
+            source.available = ready.some((o) => o.entryId === source.entryId);
         }
     }
     return result.sort((a, b) => a.baseRank - b.baseRank || a.name.localeCompare(b.name));
@@ -187,7 +191,10 @@ function signatureOptions(entry: EntrySnapshot, spell: SpellSnapshot, base: Opti
     return options;
 }
 
-/** A wand casts its spell once a day; a scroll casts it once and is used up. Both cast at the item's rank. */
+/**
+ * A wand casts its spell once a day; a scroll casts it once and is used up. Both cast at the item's rank.
+ * Once a wand's use is spent, it also offers an overcharge, which only the right-click menu casts.
+ */
 function consumableOptions(item: ConsumableSnapshot): CastOption[] {
     const base = { entryId: item.id, entryName: item.name, spellId: item.id, rank: item.spell.rank } as const;
     if (item.category === "scroll") {
@@ -199,18 +206,29 @@ function consumableOptions(item: ConsumableSnapshot): CastOption[] {
         };
         return [withReason(option, "cannot-cast")];
     }
-    const reason: UnavailableReason | undefined = !item.castable
-        ? "cannot-cast"
-        : item.uses.value > 0
-          ? undefined
-          : "no-uses";
+    const reason: UnavailableReason | undefined = item.broken
+        ? "broken"
+        : !item.castable
+          ? "cannot-cast"
+          : item.uses.value > 0
+            ? undefined
+            : "no-uses";
     const option: CastOption = {
         ...base,
         kind: "wand",
         available: !reason,
         cost: { type: "wand", ...item.uses },
     };
-    return [reason ? { ...option, reason } : option];
+    const options: CastOption[] = [reason ? { ...option, reason } : option];
+    if (item.castable && !item.viaTrickMagicItem && canOvercharge(item, item.uses.value)) {
+        options.push({
+            ...base,
+            kind: "wand-overcharge",
+            available: true,
+            cost: { type: "overcharge", destroys: item.overchargedToday },
+        });
+    }
+    return options;
 }
 
 /** Casting from a spontaneous (or flexible) caster's shared slots at a rank */

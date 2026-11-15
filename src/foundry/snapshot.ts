@@ -1,6 +1,7 @@
 import type { CharacterPF2e } from "@actor";
 import type { SpellPF2e } from "@item";
 import { MODULE_ID } from "../constants.ts";
+import { readWandState } from "../spellbook/overcharge.ts";
 import { extractFacets, type SpellSystemSource } from "../spellbook/facets.ts";
 import { readTags } from "../spellbook/tags.ts";
 import type {
@@ -60,6 +61,7 @@ function snapshotConsumables(actor: CharacterPF2e): ConsumableSnapshot[] {
         if (category !== "wand" && category !== "scroll") continue;
         const spell = item.embeddedSpell;
         if (!spell || !item.isIdentified) continue;
+        const natively = actor.spellcasting.canCastConsumable(item);
         result.push({
             id: item.id,
             name: item.name,
@@ -67,7 +69,9 @@ function snapshotConsumables(actor: CharacterPF2e): ConsumableSnapshot[] {
             spell: snapshotSpell(spell),
             uses: { value: item.uses.value, max: item.uses.max },
             quantity: item.quantity,
-            castable: trickMagicItem || actor.spellcasting.canCastConsumable(item),
+            castable: natively || trickMagicItem,
+            viaTrickMagicItem: !natively && trickMagicItem,
+            ...readWandState(category === "wand" ? item.flags[MODULE_ID] : null),
         });
     }
     return result;

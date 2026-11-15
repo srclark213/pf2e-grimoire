@@ -76,6 +76,9 @@ export function consumable(
         uses: { value: 1, max: 1 },
         quantity: 1,
         castable: true,
+        viaTrickMagicItem: false,
+        broken: false,
+        overchargedToday: false,
         ...overrides,
     };
 }

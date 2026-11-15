@@ -44,7 +44,19 @@
             "Innate": "Innate ({value} of {max} uses left)",
             "Focus": "1 focus point ({value} left)",
             "Wand": "Daily use ({value} of {max} left)",
-            "Scroll": "Uses up the scroll ({quantity} carried)"
+            "Scroll": "Uses up the scroll ({quantity} carried)",
+            "Overcharge": "Overcharge: DC 10 flat check, breaks or destroys the wand",
+            "OverchargeRepeat": "Destroys the wand: already overcharged today"
+        },
+        "Overcharge": {
+            "Title": "Overcharge wand",
+            "Confirm": "Cast {spell} from {wand} again? After the spell, you roll a DC {dc} flat check. On a success the wand is broken; on a failure it is destroyed.",
+            "ConfirmRepeat": "{wand} was already overcharged today. Overcharging it again destroys it, and no spell is cast. Continue?",
+            "Success": "Overcharge flat check (DC {dc}): success. {wand} is broken.",
+            "Failure": "Overcharge flat check (DC {dc}): failure. {wand} is destroyed.",
+            "RepeatDestroyed": "{actor} overcharged {wand} a second time today. It is destroyed and no spell is cast.",
+            "Repair": "Mark repaired",
+            "Repaired": "{wand} is marked repaired."
         },
         "Badge": {
             "wand": "Wand",
@@ -55,7 +67,8 @@
             "no-slots": "No rank {rank} slots left",
             "no-uses": "No uses left today",
             "no-focus": "No focus points left",
-            "cannot-cast": "Not on any of your spell lists"
+            "cannot-cast": "Not on any of your spell lists",
+            "broken": "Broken: repair it before using it again"
         },
         "Priority": {
             "Open": "Casting priority",
