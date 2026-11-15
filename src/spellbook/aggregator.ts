@@ -80,6 +80,7 @@ function getOrCreateRow(rows: Map<string, SpellRow>, spell: SpellSnapshot): Spel
         isFocus: spell.isFocus,
         facets: spell.facets,
         categories: categorize(spell.facets),
+        tags: [],
         spellIds: [],
         sources: [],
         castOptions: [],

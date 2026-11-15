@@ -130,6 +130,8 @@ export interface SpellRow {
     facets: SpellFacets;
     /** Automatic categories from the rule table */
     categories: SpellCategory[];
+    /** The player's own tags (GRIM-15), merged from every spell in the row */
+    tags: string[];
     /** Spell item ids on the actor that this row merges */
     spellIds: string[];
     sources: SpellSource[];

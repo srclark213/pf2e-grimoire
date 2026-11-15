@@ -66,6 +66,51 @@
                 "wand": "Wands",
                 "scroll": "Scrolls"
             }
+        },
+        "Defense": {
+            "fortitude": "Fortitude",
+            "reflex": "Reflex",
+            "will": "Will",
+            "ac": "Attack (AC)"
+        },
+        "Action": {
+            "1": "1 action",
+            "2": "2 actions",
+            "3": "3 actions",
+            "reaction": "Reaction",
+            "free": "Free action",
+            "long": "Longer"
+        },
+        "Category": {
+            "healing": "Healing",
+            "damage": "Damage",
+            "control": "Control",
+            "defense": "Defense",
+            "buff": "Buff",
+            "movement": "Movement",
+            "detection": "Detection",
+            "summoning": "Summoning",
+            "utility": "Utility"
+        },
+        "Filter": {
+            "Search": "Search spells",
+            "Count": "{shown} of {total}",
+            "Clear": "Clear search and filters",
+            "NoMatches": "No spells match the current filter.",
+            "ShowTraits": "Show traits ({count})",
+            "HideTraits": "Hide traits",
+            "SelectedTraits": "{count} selected",
+            "Group": {
+                "defense": "Targets",
+                "damage": "Damage",
+                "action": "Actions",
+                "category": "Category",
+                "trait": "Traits",
+                "tag": "Tags"
+            }
+        },
+        "Settings": {
+            "Filters": "Remembered Grimoire filters"
         }
     }
 }

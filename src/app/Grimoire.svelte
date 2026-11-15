@@ -3,6 +3,8 @@
     import type { GrimoireState } from "./grimoire-state.svelte.ts";
     import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import type { RankButton } from "../spellbook/rank-buttons.ts";
+    import { availableChips, filterGroups, type FilterState } from "../spellbook/filter.ts";
+    import FilterBar from "./FilterBar.svelte";
     import PrioritySettings from "./PrioritySettings.svelte";
     import SourceMenu from "./SourceMenu.svelte";
     import SpellRowView from "./SpellRowView.svelte";
@@ -12,9 +14,15 @@
         openSpell: (spellId: string) => void;
         cast: (option: CastOption) => Promise<void>;
         savePriority: (priority: PriorityGroup[] | null) => Promise<void>;
+        setFilter: (filter: FilterState) => void;
     }
 
-    const { grimoire, openSpell, cast, savePriority }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter }: Props = $props();
+
+    const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
+    const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
+    const shownCount = $derived(visibleGroups.reduce((n, g) => n + g.rows.length, 0));
+    const chips = $derived(availableChips(allRows, grimoire.filter.chips));
 
     let showSettings = $state(false);
 
@@ -80,8 +88,12 @@
         <PrioritySettings priority={grimoire.priority} save={savePriority} close={() => (showSettings = false)} />
     {/if}
 
+    {#if allRows.length > 0}
+        <FilterBar filter={grimoire.filter} {chips} shown={shownCount} total={spellCount} {setFilter} />
+    {/if}
+
     <div class="groups">
-        {#each grimoire.groups as group (group.rank)}
+        {#each visibleGroups as group (group.rank)}
             <section>
                 <h3>
                     <span>{rankLabel(group)}</span>
@@ -94,7 +106,9 @@
                 </ul>
             </section>
         {:else}
-            <p class="empty">{game.i18n.localize("PF2EGrimoire.NoSpells")}</p>
+            <p class="empty">
+                {game.i18n.localize(allRows.length > 0 ? "PF2EGrimoire.Filter.NoMatches" : "PF2EGrimoire.NoSpells")}
+            </p>
         {/each}
     </div>
 

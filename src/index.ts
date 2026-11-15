@@ -1,5 +1,6 @@
 import "./styles/grimoire.css";
 import { MODULE_ID } from "./constants.ts";
+import { registerFilterSetting } from "./foundry/filter-store.ts";
 import { openGrimoire, registerKeybinding, registerSheetButton } from "./launchers.ts";
 
 Hooks.once("init", () => {
@@ -7,6 +8,7 @@ Hooks.once("init", () => {
     if (module) {
         Object.assign(module, { api: { version: module.version, open: openGrimoire } });
     }
+    registerFilterSetting();
     registerKeybinding();
     registerSheetButton();
     console.log(`PF2e Grimoire | Initializing v${module?.version ?? "?"}`);

@@ -62,6 +62,11 @@ describe("extractFacets edge cases", () => {
         expect(extractFacets({ traits: { value: ["attack", "fire"] } })).toMatchObject({ defense: "ac", isAttack: true });
     });
 
+    it("accepts damage kinds as a Set, as on an actor's prepared spell", () => {
+        const facets = extractFacets({ damage: { a: { type: "vitality", kinds: new Set(["damage", "healing"]) } } });
+        expect(facets).toMatchObject({ heals: true, damageTypes: ["vitality"] });
+    });
+
     it("reads passive defenses", () => {
         expect(extractFacets({ defense: { passive: { statistic: "will-dc" } } }).defense).toBe("will");
     });

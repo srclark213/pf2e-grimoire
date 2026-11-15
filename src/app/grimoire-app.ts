@@ -3,6 +3,8 @@ import type { ItemPF2e } from "@item";
 import { flushSync, mount, unmount } from "svelte";
 import { MODULE_ID } from "../constants.ts";
 import { castOption } from "../foundry/cast.ts";
+import { loadFilter, saveFilter } from "../foundry/filter-store.ts";
+import type { FilterState } from "../spellbook/filter.ts";
 import { snapshotActor } from "../foundry/snapshot.ts";
 import { aggregateSpells, groupByRank } from "../spellbook/aggregator.ts";
 import { cantripRank } from "../spellbook/labels.ts";
@@ -49,10 +51,12 @@ export class GrimoireApp extends ApplicationV2 {
     #component: Record<string, unknown> | null = null;
     #hookIds: [string, number][] = [];
     #refreshSoon = foundry.utils.debounce(() => this.#refresh(), 50);
+    #saveFilterSoon = foundry.utils.debounce(() => void saveFilter(this.actor.uuid, this.#state.filter), 400);
 
     constructor({ actor, ...options }: GrimoireAppOptions) {
         super({ ...options, id: GrimoireApp.idFor(actor) });
         this.actor = actor;
+        this.#state.filter = loadFilter(actor.uuid);
     }
 
     override get title(): string {
@@ -73,6 +77,7 @@ export class GrimoireApp extends ApplicationV2 {
                     openSpell: (spellId: string) => this.#openSpell(spellId),
                     cast: (option: CastOption) => castOption(this.actor, option),
                     savePriority: (priority: PriorityGroup[] | null) => this.#savePriority(priority),
+                    setFilter: (filter: FilterState) => this.#setFilter(filter),
                 },
             });
             flushSync();
@@ -110,6 +115,12 @@ export class GrimoireApp extends ApplicationV2 {
     /** Opens a spell's item sheet. */
     #openSpell(spellId: string): void {
         void this.actor.items.get(spellId)?.sheet.render(true);
+    }
+
+    /** Applies a new filter now and remembers it for this character shortly after. */
+    #setFilter(filter: FilterState): void {
+        this.#state.filter = filter;
+        this.#saveFilterSoon();
     }
 
     /** Saves the character's source priority in its flags; null resets it to the default. */

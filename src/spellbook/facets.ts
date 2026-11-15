@@ -10,7 +10,8 @@ export interface SpellSystemSource {
         save?: { statistic?: string; basic?: boolean } | null;
         passive?: { statistic?: string } | null;
     } | null;
-    damage?: Record<string, { type?: string | null; kinds?: string[] | null } | null> | null;
+    /** `kinds` is an array in pack data but a Set on a prepared (actor-owned) spell */
+    damage?: Record<string, { type?: string | null; kinds?: Iterable<string> | null } | null> | null;
     time?: { value?: string | null } | null;
     traits?: { value?: string[] | null } | null;
     range?: { value?: string | null } | null;
@@ -71,14 +72,17 @@ export function extractFacets(system: SpellSystemSource): SpellFacets {
     const damageEntries = Object.values(system.damage ?? {}).filter((d): d is NonNullable<typeof d> => !!d);
     const damageTypes = unique(
         damageEntries
-            .filter((d) => (d.kinds ?? ["damage"]).includes("damage") && !(d.kinds ?? []).includes("healing"))
+            .filter((d) => {
+                const kinds = kindsOf(d.kinds, ["damage"]);
+                return kinds.includes("damage") && !kinds.includes("healing");
+            })
             .map((d) => d.type)
             .filter((t): t is string => !!t),
     );
-    const heals = damageEntries.some((d) => (d.kinds ?? []).includes("healing")) || traits.includes("healing");
+    const heals = damageEntries.some((d) => kindsOf(d.kinds).includes("healing")) || traits.includes("healing");
     // Heal and Harm hurt undead or the living too: count that type as damage as well.
     for (const d of damageEntries) {
-        const kinds = d.kinds ?? [];
+        const kinds = kindsOf(d.kinds);
         if (kinds.includes("healing") && kinds.includes("damage") && d.type && !damageTypes.includes(d.type)) {
             damageTypes.push(d.type);
         }
@@ -144,6 +148,10 @@ export function parseActions(time: string): ActionKey[] {
 export function linkedConditions(html: string): string[] {
     const found = [...html.matchAll(/conditionitems\.Item\.([A-Za-z-]+)/g)].map((m) => m[1]!.toLowerCase());
     return unique(found);
+}
+
+function kindsOf(kinds: Iterable<string> | null | undefined, fallback: string[] = []): string[] {
+    return kinds ? Array.from(kinds) : fallback;
 }
 
 function unique<T>(values: T[]): T[] {
