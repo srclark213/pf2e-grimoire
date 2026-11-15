@@ -78,6 +78,7 @@ export class GrimoireApp extends ApplicationV2 {
                     cast: (option: CastOption) => castOption(this.actor, option),
                     savePriority: (priority: PriorityGroup[] | null) => this.#savePriority(priority),
                     setFilter: (filter: FilterState) => this.#setFilter(filter),
+                    setTags: (spellIds: string[], tags: string[]) => this.#setTags(spellIds, tags),
                 },
             });
             flushSync();
@@ -115,6 +116,15 @@ export class GrimoireApp extends ApplicationV2 {
     /** Opens a spell's item sheet. */
     #openSpell(spellId: string): void {
         void this.actor.items.get(spellId)?.sheet.render(true);
+    }
+
+    /** Saves a row's tags on every spell item the row merges, so they survive one copy being removed. */
+    async #setTags(spellIds: string[], tags: string[]): Promise<void> {
+        const path = `flags.${MODULE_ID}.tags`;
+        await this.actor.updateEmbeddedDocuments(
+            "Item",
+            spellIds.map((_id) => ({ _id, [path]: tags })),
+        );
     }
 
     /** Applies a new filter now and remembers it for this character shortly after. */

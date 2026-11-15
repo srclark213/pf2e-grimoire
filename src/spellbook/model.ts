@@ -46,6 +46,8 @@ export interface SpellSnapshot {
     uses: UsesSnapshot | null;
     /** Filterable facts from the spell's data */
     facets: SpellFacets;
+    /** The player's own tags, from the spell item's flags */
+    tags: string[];
 }
 
 export interface PreparedSlotSnapshot {

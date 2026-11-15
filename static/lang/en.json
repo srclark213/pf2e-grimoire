@@ -111,6 +111,12 @@
         },
         "Settings": {
             "Filters": "Remembered Grimoire filters"
+        },
+        "Tags": {
+            "Edit": "Edit tags",
+            "Add": "Add a tag and press Enter",
+            "Remove": "Remove tag {tag}",
+            "Done": "Done"
         }
     }
 }

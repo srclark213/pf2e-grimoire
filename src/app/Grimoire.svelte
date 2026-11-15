@@ -15,9 +15,10 @@
         cast: (option: CastOption) => Promise<void>;
         savePriority: (priority: PriorityGroup[] | null) => Promise<void>;
         setFilter: (filter: FilterState) => void;
+        setTags: (spellIds: string[], tags: string[]) => Promise<void>;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setTags }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
@@ -101,7 +102,15 @@
                 </h3>
                 <ul>
                     {#each group.rows as row (row.key)}
-                        <SpellRowView {row} priority={grimoire.priority} {openSpell} {cast} {openMenu} />
+                        <SpellRowView
+                            {row}
+                            priority={grimoire.priority}
+                            {openSpell}
+                            {cast}
+                            {openMenu}
+                            {setTags}
+                            knownTags={chips.tag}
+                        />
                     {/each}
                 </ul>
             </section>

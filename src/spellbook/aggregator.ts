@@ -1,4 +1,5 @@
 import { categorize } from "./categories.ts";
+import { uniqueTags } from "./tags.ts";
 import type {
     ActorSnapshot,
     CastOption,
@@ -31,6 +32,7 @@ export function aggregateSpells(actor: ActorSnapshot): SpellRow[] {
                 row.sources.push({ entryId: entry.id, entryName: entry.name, kind, available: false });
             }
             row.isFocus ||= spell.isFocus;
+            row.tags = uniqueTags([...row.tags, ...spell.tags]);
             if (!autoHeightens(spell)) {
                 fixedRanks.set(row.key, [...(fixedRanks.get(row.key) ?? []), spell.baseRank]);
             }

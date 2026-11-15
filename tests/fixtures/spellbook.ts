@@ -19,6 +19,7 @@ export function spell(name: string, overrides: Partial<SpellSnapshot> = {}): Spe
         signature: false,
         uses: null,
         facets: extractFacets({}),
+        tags: [],
         ...overrides,
     };
 }
