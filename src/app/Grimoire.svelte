@@ -1,48 +1,67 @@
 <script lang="ts">
     import type { CastOption, RankGroup } from "../spellbook/model.ts";
     import type { GrimoireState } from "./grimoire-state.svelte.ts";
+    import type { RankButton } from "../spellbook/rank-buttons.ts";
+    import SourceMenu from "./SourceMenu.svelte";
     import SpellRowView from "./SpellRowView.svelte";
 
     const {
-        state,
+        grimoire,
         openSpell,
         cast,
-    }: { state: GrimoireState; openSpell: (spellId: string) => void; cast: (option: CastOption) => Promise<void> } =
+    }: { grimoire: GrimoireState; openSpell: (spellId: string) => void; cast: (option: CastOption) => Promise<void> } =
         $props();
 
-    const spellCount = $derived(state.groups.reduce((n, g) => n + g.rows.length, 0));
+    let root: HTMLElement | undefined = $state();
+    let menu: { x: number; y: number; button: RankButton } | null = $state(null);
+
+    /** Opens the right-click source menu for a rank button, inside the window near the pointer. */
+    function openMenu(event: MouseEvent, button: RankButton): void {
+        if (!root) return;
+        const bounds = root.getBoundingClientRect();
+        const x = Math.max(0, Math.min(event.clientX - bounds.left, bounds.width - 240));
+        const y = Math.max(0, event.clientY - bounds.top);
+        menu = { x, y, button };
+    }
+
+    async function choose(option: CastOption): Promise<void> {
+        menu = null;
+        await cast(option);
+    }
+
+    const spellCount = $derived(grimoire.groups.reduce((n, g) => n + g.rows.length, 0));
 
     function rankLabel(group: RankGroup): string {
         if (group.rank > 0) return game.i18n.localize("PF2EGrimoire.Rank", { rank: group.rank });
         const hasFocus = group.rows.some((r) => r.isFocus);
         const hasCantrips = group.rows.some((r) => r.isCantrip && !r.isFocus);
         const key = hasFocus && hasCantrips ? "CantripsAndFocus" : hasFocus ? "FocusAtRank" : "CantripsAtRank";
-        return game.i18n.localize(`PF2EGrimoire.${key}`, { rank: state.cantripRank });
+        return game.i18n.localize(`PF2EGrimoire.${key}`, { rank: grimoire.cantripRank });
     }
 </script>
 
-<div class="grimoire">
+<div class="grimoire" bind:this={root}>
     <header>
         <span class="summary">
-            {game.i18n.localize("PF2EGrimoire.Summary", { spells: spellCount, entries: state.entryCount })}
+            {game.i18n.localize("PF2EGrimoire.Summary", { spells: spellCount, entries: grimoire.entryCount })}
         </span>
-        {#if state.focus}
+        {#if grimoire.focus}
             <span
                 class="focus"
                 data-tooltip={game.i18n.localize("PF2EGrimoire.FocusPoints", {
-                    value: state.focus.value,
-                    max: state.focus.max,
+                    value: grimoire.focus.value,
+                    max: grimoire.focus.max,
                 })}
             >
-                {#each Array.from({ length: state.focus.max }, (_, i) => i) as i (i)}
-                    <i class={i < state.focus.value ? "fa-solid fa-circle" : "fa-regular fa-circle"}></i>
+                {#each Array.from({ length: grimoire.focus.max }, (_, i) => i) as i (i)}
+                    <i class={i < grimoire.focus.value ? "fa-solid fa-circle" : "fa-regular fa-circle"}></i>
                 {/each}
             </span>
         {/if}
     </header>
 
     <div class="groups">
-        {#each state.groups as group (group.rank)}
+        {#each grimoire.groups as group (group.rank)}
             <section>
                 <h3>
                     <span>{rankLabel(group)}</span>
@@ -50,7 +69,7 @@
                 </h3>
                 <ul>
                     {#each group.rows as row (row.key)}
-                        <SpellRowView {row} {openSpell} {cast} />
+                        <SpellRowView {row} {openSpell} {cast} {openMenu} />
                     {/each}
                 </ul>
             </section>
@@ -58,10 +77,23 @@
             <p class="empty">{game.i18n.localize("PF2EGrimoire.NoSpells")}</p>
         {/each}
     </div>
+
+    {#if menu}
+        <SourceMenu
+            x={menu.x}
+            y={menu.y}
+            rank={menu.button.rank}
+            options={menu.button.options}
+            defaultOption={menu.button.available ? menu.button.option : null}
+            {choose}
+            close={() => (menu = null)}
+        />
+    {/if}
 </div>
 
 <style>
     .grimoire {
+        position: relative;
         display: flex;
         flex-direction: column;
         height: 100%;

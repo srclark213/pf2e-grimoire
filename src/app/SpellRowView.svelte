@@ -1,14 +1,16 @@
 <script lang="ts">
     import { badgeLabel } from "../spellbook/labels.ts";
     import type { CastOption, SpellRow } from "../spellbook/model.ts";
-    import { rankButtons } from "../spellbook/rank-buttons.ts";
+    import { rankButtons, type RankButton } from "../spellbook/rank-buttons.ts";
 
-    const {
-        row,
-        openSpell,
-        cast,
-    }: { row: SpellRow; openSpell: (spellId: string) => void; cast: (option: CastOption) => Promise<void> } =
-        $props();
+    interface Props {
+        row: SpellRow;
+        openSpell: (spellId: string) => void;
+        cast: (option: CastOption) => Promise<void>;
+        openMenu: (event: MouseEvent, button: RankButton) => void;
+    }
+
+    const { row, openSpell, cast, openMenu }: Props = $props();
 
     const buttons = $derived(rankButtons(row));
     let casting = $state(false);
@@ -43,10 +45,15 @@
             <button
                 type="button"
                 class="rank"
-                disabled={!button.available || casting}
+                aria-disabled={!button.available || casting}
                 class:spent={!button.available}
                 data-tooltip={buttonTooltip(button.option, button.available)}
-                onclick={() => onCast(button.option)}
+                onclick={() => button.available && onCast(button.option)}
+                oncontextmenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openMenu(event, button);
+                }}
             >
                 {button.rank}
             </button>
@@ -125,13 +132,13 @@
         text-align: center;
         cursor: pointer;
     }
-    .rank:hover:not(:disabled) {
+    .rank:hover:not(.spent) {
         background: color-mix(in srgb, currentColor 25%, transparent);
     }
     .rank:focus-visible {
         outline: 1px solid currentColor;
     }
-    .rank:disabled {
+    .rank.spent {
         cursor: default;
     }
     .rank.spent {

@@ -259,3 +259,48 @@ describe("groupByRank", () => {
         ]);
     });
 });
+
+describe("costs and reasons", () => {
+    it("describes a prepared slot, and says why it can't be cast once expended", () => {
+        const rows = aggregateSpells(
+            actor([
+                entry("Wizard", "prepared", [spell("Mist", { id: "mist" })], {
+                    slots: slots({ 1: { max: 2, prepared: [{ id: "mist", expended: false }, { id: "mist", expended: true }] } }),
+                }),
+            ]),
+        );
+        expect(row(rows, "Mist").castOptions.map((o) => [o.cost.type, o.reason])).toEqual([
+            ["prepared-slot", undefined],
+            ["prepared-slot", "expended"],
+        ]);
+    });
+
+    it("reports slots left for spontaneous casting", () => {
+        const make = (value: number) =>
+            aggregateSpells(actor([entry("Bard", "spontaneous", [spell("Fear")], { slots: slots({ 1: { max: 3, value } }) })]));
+        expect(row(make(2), "Fear").castOptions[0]).toMatchObject({ cost: { type: "slot", value: 2, max: 3 } });
+        expect(row(make(0), "Fear").castOptions[0]).toMatchObject({ available: false, reason: "no-slots" });
+    });
+
+    it("reports innate uses and focus points", () => {
+        const rows = aggregateSpells(
+            actor(
+                [
+                    entry("Elf Magic", "innate", [spell("Faerie Fire", { uses: { value: 0, max: 1 } })]),
+                    entry("Domain", "focus", [spell("Fire Ray", { isFocus: true, rank: 3 })]),
+                ],
+                { focus: { value: 0, max: 2 } },
+            ),
+        );
+        expect(row(rows, "Faerie Fire").castOptions[0]).toMatchObject({
+            cost: { type: "innate", value: 0, max: 1 },
+            reason: "no-uses",
+        });
+        expect(row(rows, "Fire Ray").castOptions[0]).toMatchObject({ cost: { type: "focus", value: 0 }, reason: "no-focus" });
+    });
+
+    it("marks cantrips as free", () => {
+        const rows = aggregateSpells(actor([entry("Sorcerer", "spontaneous", [cantrip("Daze")])]));
+        expect(row(rows, "Daze").castOptions[0]?.cost).toEqual({ type: "free" });
+    });
+});

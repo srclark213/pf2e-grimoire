@@ -30,10 +30,25 @@
         },
         "CantripsAndFocus": "Cantrips and focus spells (rank {rank})",
         "FocusAtRank": "Focus spells (rank {rank})",
-        "CastAt": "Cast at rank {rank} ({source})",
+        "CastAt": "Cast at rank {rank} ({source}). Right-click for other sources.",
         "SpentAt": "Rank {rank}: spent ({source})",
         "Error": {
             "SpellNotFound": "That spell or spellcasting entry no longer exists on this character."
+        },
+        "CastAtRank": "Cast at rank {rank}",
+        "DefaultPick": "Left-click casts this",
+        "Cost": {
+            "Free": "Free",
+            "PreparedSlot": "Prepared rank {rank} slot",
+            "Slot": "Rank {rank} slot ({value} of {max} left)",
+            "Innate": "Innate ({value} of {max} uses left)",
+            "Focus": "1 focus point ({value} left)"
+        },
+        "Reason": {
+            "expended": "This slot is already used",
+            "no-slots": "No rank {rank} slots left",
+            "no-uses": "No uses left today",
+            "no-focus": "No focus points left"
         }
     }
 }

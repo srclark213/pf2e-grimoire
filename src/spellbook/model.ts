@@ -76,6 +76,17 @@ export interface ActorSnapshot {
     entries: EntrySnapshot[];
 }
 
+/** What casting through an option spends, with what is left of it */
+export type CastCost =
+    | { type: "free" }
+    | { type: "prepared-slot" }
+    | { type: "slot"; value: number; max: number }
+    | { type: "innate"; value: number; max: number }
+    | { type: "focus"; value: number };
+
+/** Why an option can't be cast right now */
+export type UnavailableReason = "expended" | "no-slots" | "no-uses" | "no-focus";
+
 /** One way to cast a spell right now, at one rank */
 export interface CastOption {
     kind: SourceKind;
@@ -87,6 +98,9 @@ export interface CastOption {
     /** For prepared casters, which slot at `rank` is spent */
     slotIndex?: number;
     available: boolean;
+    cost: CastCost;
+    /** Set when `available` is false */
+    reason?: UnavailableReason;
 }
 
 /** A spellcasting entry that has this spell, shown as a badge on the row */

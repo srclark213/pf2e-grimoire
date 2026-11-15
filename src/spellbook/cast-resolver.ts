@@ -27,6 +27,25 @@ export function isAutoPickable(option: CastOption): boolean {
     return GROUP_OF[option.kind] !== null;
 }
 
+/** Where an option sits in the priority order. Manual-only kinds and groups missing from the list sort last. */
+function priorityIndex(option: CastOption, priority: readonly PriorityGroup[]): number {
+    const group = GROUP_OF[option.kind];
+    if (!group) return priority.length + 1;
+    const index = priority.indexOf(group);
+    return index === -1 ? priority.length : index;
+}
+
+/** All options in priority order (stable, so entry order breaks ties), for the right-click menu. */
+export function orderByPriority(
+    options: readonly CastOption[],
+    priority: readonly PriorityGroup[] = DEFAULT_PRIORITY,
+): CastOption[] {
+    return options
+        .map((option, i) => ({ option, i, p: priorityIndex(option, priority) }))
+        .sort((a, b) => a.p - b.p || a.i - b.i)
+        .map(({ option }) => option);
+}
+
 /**
  * Picks the option a plain click casts: the available, auto-pickable option whose group comes first
  * in the priority order. Ties keep the incoming order (spellcasting-entry order). Null if none qualify.
@@ -35,17 +54,10 @@ export function resolveCast(
     options: readonly CastOption[],
     priority: readonly PriorityGroup[] = DEFAULT_PRIORITY,
 ): CastOption | null {
-    const rankOf = (option: CastOption): number => {
-        const group = GROUP_OF[option.kind];
-        const index = group ? priority.indexOf(group) : -1;
-        // Groups missing from a saved priority list go last rather than being dropped.
-        return index === -1 ? priority.length : index;
-    };
-
     let best: CastOption | null = null;
     for (const option of options) {
         if (!option.available || !isAutoPickable(option)) continue;
-        if (!best || rankOf(option) < rankOf(best)) best = option;
+        if (!best || priorityIndex(option, priority) < priorityIndex(best, priority)) best = option;
     }
     return best;
 }

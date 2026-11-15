@@ -1,4 +1,4 @@
-import { DEFAULT_PRIORITY, resolveCast, type PriorityGroup } from "./cast-resolver.ts";
+import { DEFAULT_PRIORITY, orderByPriority, resolveCast, type PriorityGroup } from "./cast-resolver.ts";
 import type { CastOption, SpellRow } from "./model.ts";
 
 /** One [n] button on a spell row */
@@ -8,7 +8,7 @@ export interface RankButton {
     available: boolean;
     /** The option a plain click casts (when unavailable, a representative option for the tooltip) */
     option: CastOption;
-    /** Every way to cast the spell at this rank, available or not */
+    /** Every way to cast the spell at this rank, available or not, in priority order (the right-click menu) */
     options: CastOption[];
 }
 
@@ -29,6 +29,7 @@ export function rankButtons(row: SpellRow, priority: readonly PriorityGroup[] = 
         .sort(([a], [b]) => a - b)
         .map(([rank, options]) => {
             const picked = resolveCast(options, priority);
-            return { rank, available: !!picked, option: picked ?? options[0]!, options };
+            const ordered = orderByPriority(options, priority);
+            return { rank, available: !!picked, option: picked ?? ordered[0]!, options: ordered };
         });
 }

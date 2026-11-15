@@ -67,7 +67,7 @@ export class GrimoireApp extends ApplicationV2 {
             this.#component = mount(Grimoire, {
                 target: content,
                 props: {
-                    state: this.#state,
+                    grimoire: this.#state,
                     openSpell: (spellId: string) => this.#openSpell(spellId),
                     cast: (option: CastOption) => castOption(this.actor, option),
                 },

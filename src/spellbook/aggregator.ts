@@ -6,6 +6,7 @@ import type {
     SourceKind,
     SpellRow,
     SpellSnapshot,
+    UnavailableReason,
 } from "./model.ts";
 
 const MAX_RANK = 10;
@@ -92,22 +93,35 @@ function autoHeightens(spell: SpellSnapshot): boolean {
 
 function castOptionsFor(actor: ActorSnapshot, entry: EntrySnapshot, spell: SpellSnapshot): CastOption[] {
     const base = { kind: entry.category, entryId: entry.id, entryName: entry.name, spellId: spell.id } as const;
+    const free = { ...base, rank: spell.rank, available: true, cost: { type: "free" } } as const;
 
     switch (entry.category) {
         case "focus": {
             // Focus cantrips are free; other focus spells need a focus point. Both auto-heighten.
-            const available = spell.isCantrip || (actor.focus?.value ?? 0) > 0;
-            return [{ ...base, rank: spell.rank, available }];
+            if (spell.isCantrip) return [free];
+            const points = actor.focus?.value ?? 0;
+            return [
+                withReason(
+                    { ...base, rank: spell.rank, available: points > 0, cost: { type: "focus", value: points } },
+                    "no-focus",
+                ),
+            ];
         }
         case "innate": {
             // Matches pf2e's sheet: an innate spell is expended when it has no uses left.
-            const available = spell.isCantrip || (spell.uses?.value ?? 0) > 0;
-            return [{ ...base, rank: spell.rank, available }];
+            if (spell.isCantrip) return [free];
+            const uses = spell.uses ?? { value: 0, max: 0 };
+            return [
+                withReason(
+                    { ...base, rank: spell.rank, available: uses.value > 0, cost: { type: "innate", ...uses } },
+                    "no-uses",
+                ),
+            ];
         }
         case "spontaneous":
-            if (spell.isCantrip) return [{ ...base, rank: spell.rank, available: true }];
+            if (spell.isCantrip) return [free];
             if (spell.signature) return signatureOptions(entry, spell, base);
-            return [{ ...base, rank: spell.rank, available: slotsLeft(entry, spell.rank) }];
+            return [slotOption(entry, spell.rank, base)];
         case "prepared":
             // Flexible casters cast their signature (collection) spells from shared slots, like spontaneous casters.
             // Their cantrips are prepared normally.
@@ -120,6 +134,10 @@ function castOptionsFor(actor: ActorSnapshot, entry: EntrySnapshot, spell: Spell
 
 type OptionBase = Pick<CastOption, "kind" | "entryId" | "entryName" | "spellId">;
 
+function withReason(option: CastOption, reason: UnavailableReason): CastOption {
+    return option.available ? option : { ...option, reason };
+}
+
 /** A prepared spell can be cast once per slot it occupies, at that slot's rank. */
 function preparedOptions(entry: EntrySnapshot, spell: SpellSnapshot, base: OptionBase): CastOption[] {
     const options: CastOption[] = [];
@@ -127,9 +145,16 @@ function preparedOptions(entry: EntrySnapshot, spell: SpellSnapshot, base: Optio
         slotRank.prepared.forEach((slot, slotIndex) => {
             if (slot.id !== spell.id) return;
             if (rank === 0) {
-                options.push({ ...base, rank: spell.rank, slotIndex, available: true });
+                options.push({ ...base, rank: spell.rank, slotIndex, available: true, cost: { type: "free" } });
             } else {
-                options.push({ ...base, rank, slotIndex, available: !slot.expended });
+                const option: CastOption = {
+                    ...base,
+                    rank,
+                    slotIndex,
+                    available: !slot.expended,
+                    cost: { type: "prepared-slot" },
+                };
+                options.push(withReason(option, "expended"));
             }
         });
     });
@@ -140,13 +165,14 @@ function preparedOptions(entry: EntrySnapshot, spell: SpellSnapshot, base: Optio
 function signatureOptions(entry: EntrySnapshot, spell: SpellSnapshot, base: OptionBase): CastOption[] {
     const options: CastOption[] = [];
     for (let rank = Math.max(1, spell.baseRank); rank <= MAX_RANK; rank++) {
-        if ((entry.slots[rank]?.max ?? 0) > 0) {
-            options.push({ ...base, rank, available: slotsLeft(entry, rank) });
-        }
+        if ((entry.slots[rank]?.max ?? 0) > 0) options.push(slotOption(entry, rank, base));
     }
     return options;
 }
 
-function slotsLeft(entry: EntrySnapshot, rank: number): boolean {
-    return (entry.slots[rank]?.value ?? 0) > 0;
+/** Casting from a spontaneous (or flexible) caster's shared slots at a rank */
+function slotOption(entry: EntrySnapshot, rank: number, base: OptionBase): CastOption {
+    const value = entry.slots[rank]?.value ?? 0;
+    const max = entry.slots[rank]?.max ?? 0;
+    return withReason({ ...base, rank, available: value > 0, cost: { type: "slot", value, max } }, "no-slots");
 }

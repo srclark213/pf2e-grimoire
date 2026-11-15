@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PRIORITY, isAutoPickable, resolveCast } from "../src/spellbook/cast-resolver.ts";
+import { DEFAULT_PRIORITY, isAutoPickable, orderByPriority, resolveCast } from "../src/spellbook/cast-resolver.ts";
 import type { CastOption, SourceKind } from "../src/spellbook/model.ts";
 
 function option(kind: SourceKind, overrides: Partial<CastOption> = {}): CastOption {
@@ -10,6 +10,7 @@ function option(kind: SourceKind, overrides: Partial<CastOption> = {}): CastOpti
         spellId: `${kind}-spell`,
         rank: 2,
         available: true,
+        cost: { type: "free" },
         ...overrides,
     };
 }
@@ -68,5 +69,27 @@ describe("resolveCast", () => {
     it("returns null when nothing is available", () => {
         expect(resolveCast([])).toBeNull();
         expect(resolveCast([option("prepared", { available: false })])).toBeNull();
+    });
+});
+
+describe("orderByPriority", () => {
+    it("lists options in priority order with manual-only options last, keeping entry order for ties", () => {
+        const a = option("innate");
+        const b = option("wand-overcharge");
+        const c = option("prepared", { entryId: "p1" });
+        const d = option("spontaneous", { entryId: "s1" });
+        const e = option("wand");
+        expect(orderByPriority([a, b, c, d, e]).map((o) => o.kind)).toEqual([
+            "prepared",
+            "spontaneous",
+            "innate",
+            "wand",
+            "wand-overcharge",
+        ]);
+    });
+
+    it("keeps unavailable options in the list", () => {
+        const spent = option("prepared", { available: false });
+        expect(orderByPriority([option("innate"), spent])[0]).toBe(spent);
     });
 });
