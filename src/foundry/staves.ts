@@ -3,7 +3,9 @@ import type { ItemPF2e, SpellcastingEntryPF2e, SpellPF2e, WeaponPF2e } from "@it
 import { MODULE_ID } from "../constants.ts";
 import type { SpellSnapshot, StaffSnapshot, StaffSpellSnapshot } from "../spellbook/model.ts";
 import {
+    addCharges,
     prepareStaff,
+    type BoostSlot,
     readStaffData,
     restPreparation,
     spendCharges,
@@ -16,6 +18,61 @@ import {
 const t = (key: string, data?: Record<string, unknown>) => game.i18n.localize(`PF2EGrimoire.${key}`, data);
 
 const STAFF_FLAG = `flags.${MODULE_ID}.staff`;
+/** Actor flag: world time of today's staff slot boost. Rest clears it. */
+const BOOST_FLAG = "staffBoostUsedOn";
+
+/** Whether the character already expended a slot into a staff since their last rest */
+export function boostUsedToday(actor: CharacterPF2e): boolean {
+    return typeof actor.getFlag(MODULE_ID, BOOST_FLAG) === "number";
+}
+
+/**
+ * The prepared caster's once-a-day staff boost: asks which slot to expend, expends it, and adds charges
+ * equal to its rank to the staff (raising the day's maximum too).
+ */
+export async function boostStaff(actor: CharacterPF2e, staffId: string, slots: readonly BoostSlot[]): Promise<void> {
+    const staff = carriedStaves(actor).find((s) => s.id === staffId);
+    if (!staff || slots.length === 0 || boostUsedToday(actor)) return;
+    const data = readStaff(staff);
+    if (data.preparedBy !== actor.id) return;
+
+    const options = slots
+        .map((slot, i) => {
+            const label = t(slot.spellName ? "Boost.SlotWithSpell" : "Boost.Slot", {
+                rank: slot.rank,
+                spell: slot.spellName ?? "",
+                entry: slot.entryName,
+            });
+            return `<label><input type="radio" name="slot" value="${i}"${i === 0 ? " checked" : ""}> ${label}</label>`;
+        })
+        .join("<br>");
+    const chosen: unknown = await foundry.applications.api.DialogV2.prompt({
+        window: { title: t("Boost.Title") },
+        content: `<p>${t("Boost.Hint", { staff: staff.name })}</p><p>${options}</p>`,
+        ok: {
+            label: t("Boost.Confirm"),
+            callback: (_event: unknown, button: HTMLButtonElement) =>
+                (button.form?.elements.namedItem("slot") as RadioNodeList | null)?.value ?? "",
+        },
+        rejectClose: false,
+    });
+    const slot = typeof chosen === "string" && chosen !== "" ? slots[Number(chosen)] : undefined;
+    if (!slot) return;
+
+    const entry = actor.items.get(slot.entryId);
+    if (!entry?.isOfType("spellcastingEntry")) return;
+    if (slot.slotIndex !== null) {
+        await entry.setSlotExpendedState(slot.rank as 1, slot.slotIndex, true);
+    } else {
+        const key = `slot${slot.rank as 1}` as const;
+        const left = entry.system.slots[key]?.value ?? 0;
+        if (left <= 0) return;
+        await entry.update({ [`system.slots.${key}.value`]: left - 1 });
+    }
+    await writeStaff(staff, addCharges(readStaff(staff), slot.rank));
+    await actor.setFlag(MODULE_ID, BOOST_FLAG, game.time.worldTime);
+    ui.notifications.info(t("Boost.Done", { staff: staff.name, charges: slot.rank }));
+}
 
 /** A weapon with the staff trait */
 export function isStaff(item: unknown): item is WeaponPF2e<CharacterPF2e> {
@@ -226,6 +283,7 @@ async function askWhichStaff(actor: CharacterPF2e, staffIds: string[]): Promise<
  * carried staff is prepared automatically, or the player picks one when they carry several.
  */
 export async function prepareStavesOnRest(actor: CharacterPF2e): Promise<void> {
+    if (actor.getFlag(MODULE_ID, BOOST_FLAG) != null) await actor.unsetFlag(MODULE_ID, BOOST_FLAG);
     const staves = carriedStaves(actor);
     for (const staff of staves) {
         if (readStaff(staff).preparedBy === actor.id) await writeStaff(staff, unprepareStaff(readStaff(staff)));

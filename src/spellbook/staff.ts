@@ -8,6 +8,8 @@
  * name-form links (`Item.Fireball`); a built world has id-form links (`Item.sxQZ6yqTn0czJxVd{Fireball}`).
  */
 
+import type { EntrySnapshot } from "./model.ts";
+
 /** One spell on a staff */
 export interface StaffSpellRef {
     uuid: string;
@@ -167,4 +169,50 @@ export function restPreparation(staffIds: readonly string[], highestSlotRank: nu
     if (highestSlotRank <= 0 || staffIds.length === 0) return { type: "none" };
     if (staffIds.length === 1) return { type: "auto", staffId: staffIds[0]! };
     return { type: "ask", staffIds: [...staffIds] };
+}
+
+/** A spell slot a prepared caster can expend to add charges to their staff */
+export interface BoostSlot {
+    entryId: string;
+    entryName: string;
+    rank: number;
+    /** Prepared slot index; null for a flexible caster's shared slots */
+    slotIndex: number | null;
+    /** The spell prepared in the slot, if any */
+    spellName: string | null;
+}
+
+/**
+ * The slots a prepared caster (the animist counts as one) could expend for the staff slot boost: unexpended
+ * prepared slots of rank 1 and up, or a flexible caster's remaining slots. Spontaneous entries never count.
+ */
+export function boostSlots(entries: readonly EntrySnapshot[]): BoostSlot[] {
+    const slots: BoostSlot[] = [];
+    for (const entry of entries) {
+        if (entry.category !== "prepared") continue;
+        entry.slots.forEach((slot, rank) => {
+            if (rank === 0) return;
+            if (entry.isFlexible) {
+                if (slot.value > 0) {
+                    slots.push({ entryId: entry.id, entryName: entry.name, rank, slotIndex: null, spellName: null });
+                }
+                return;
+            }
+            slot.prepared.forEach((prepared, slotIndex) => {
+                if (prepared.expended || prepared.id === null) return;
+                const spellName = entry.spells.find((s) => s.id === prepared.id)?.name ?? null;
+                slots.push({ entryId: entry.id, entryName: entry.name, rank, slotIndex, spellName });
+            });
+        });
+    }
+    return slots.sort((a, b) => b.rank - a.rank);
+}
+
+/** Whether a character can boost a staff right now: they prepared it today, haven't boosted, and have a slot */
+export function canBoostStaff(
+    staffPreparedByMe: boolean,
+    boostUsedToday: boolean,
+    slots: readonly BoostSlot[],
+): boolean {
+    return staffPreparedByMe && !boostUsedToday && slots.length > 0;
 }

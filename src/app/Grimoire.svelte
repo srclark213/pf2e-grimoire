@@ -21,9 +21,10 @@
         repairWand: (wandId: string) => Promise<void>;
         prepareStaff: (staffId: string) => Promise<void>;
         importLegacyStaves: () => Promise<void>;
+        boostStaff: (staffId: string) => Promise<void>;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
@@ -100,6 +101,8 @@
             legacyCount={grimoire.legacyStaves}
             prepare={prepareStaff}
             importLegacy={importLegacyStaves}
+            boost={grimoire.boost}
+            {boostStaff}
         />
     {/if}
 

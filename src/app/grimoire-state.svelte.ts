@@ -1,6 +1,7 @@
 import { DEFAULT_PRIORITY, type PriorityGroup } from "../spellbook/cast-resolver.ts";
 import { DEFAULT_COLLAPSED, EMPTY_FILTER, type ChipGroup, type FilterState } from "../spellbook/filter.ts";
 import type { RankGroup, StaffSnapshot, UsesSnapshot } from "../spellbook/model.ts";
+import type { BoostSlot } from "../spellbook/staff.ts";
 
 /** Reactive state shared between GrimoireApp and its Svelte components. The app replaces it on actor changes. */
 export class GrimoireState {
@@ -12,6 +13,8 @@ export class GrimoireState {
     focus: UsesSnapshot | null = $state.raw(null);
     /** Staves the character carries */
     staves: StaffSnapshot[] = $state.raw([]);
+    /** Slots a prepared caster could expend into a staff today, and whether today's boost is used */
+    boost: { slots: BoostSlot[]; used: boolean } = $state.raw({ slots: [], used: false });
     /** PF2e Staves entries still on the character, waiting to be imported */
     legacyStaves = $state(0);
     /** The character's source priority order, from its flags */

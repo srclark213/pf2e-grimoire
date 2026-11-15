@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { aggregateSpells } from "../src/spellbook/aggregator.ts";
 import type { StaffSnapshot, StaffSpellSnapshot } from "../src/spellbook/model.ts";
 import { rankButtons } from "../src/spellbook/rank-buttons.ts";
+import { boostSlots, canBoostStaff } from "../src/spellbook/staff.ts";
 import { actor, cantrip, entry, slots, spell } from "./fixtures/spellbook.ts";
 
 function listed(rank: number, name: string, overrides: Partial<StaffSpellSnapshot> = {}): StaffSpellSnapshot {
@@ -87,5 +88,42 @@ describe("staff spells as sources", () => {
         const [button] = rankButtons(rows[0]!);
         expect(button!.options.map((o) => o.kind)).toEqual(["spontaneous", "staff"]);
         expect(button!.option.kind).toBe("spontaneous");
+    });
+});
+
+describe("prepared caster slot boost", () => {
+    const fireball = spell("Fireball", { id: "fb", baseRank: 3 });
+    const heal = spell("Heal", { id: "heal", baseRank: 1 });
+
+    it("offers unexpended prepared slots, highest rank first, with the prepared spell", () => {
+        const druid = entry("Druid", "prepared", [fireball, heal], {
+            slots: slots({
+                1: { prepared: [{ id: "heal", expended: false }, { id: null, expended: false }] },
+                3: { prepared: [{ id: "fb", expended: false }, { id: "fb", expended: true }] },
+            }),
+        });
+        expect(boostSlots([druid])).toEqual([
+            { entryId: "druid-entry", entryName: "Druid", rank: 3, slotIndex: 0, spellName: "Fireball" },
+            { entryId: "druid-entry", entryName: "Druid", rank: 1, slotIndex: 0, spellName: "Heal" },
+        ]);
+    });
+
+    it("offers a flexible caster's remaining slots, and never spontaneous slots", () => {
+        const flexible = entry("Flexible", "prepared", [], {
+            isFlexible: true,
+            slots: slots({ 2: { value: 1, max: 2 }, 4: { value: 0, max: 1 } }),
+        });
+        const sorcerer = entry("Sorcerer", "spontaneous", [], { slots: slots({ 5: { value: 3, max: 3 } }) });
+        expect(boostSlots([flexible, sorcerer]).map((s) => [s.entryName, s.rank, s.slotIndex])).toEqual([
+            ["Flexible", 2, null],
+        ]);
+    });
+
+    it("is available once a day, on a staff the character prepared", () => {
+        const one = [{ entryId: "e", entryName: "E", rank: 1, slotIndex: 0, spellName: null }];
+        expect(canBoostStaff(true, false, one)).toBe(true);
+        expect(canBoostStaff(true, true, one)).toBe(false);
+        expect(canBoostStaff(false, false, one)).toBe(false);
+        expect(canBoostStaff(true, false, [])).toBe(false);
     });
 });

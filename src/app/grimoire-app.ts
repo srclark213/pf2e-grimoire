@@ -3,7 +3,8 @@ import type { ItemPF2e } from "@item";
 import { flushSync, mount, unmount } from "svelte";
 import { MODULE_ID } from "../constants.ts";
 import { castOption } from "../foundry/cast.ts";
-import { loadStaffSpells, prepareStaffFor } from "../foundry/staves.ts";
+import { boostStaff, boostUsedToday, loadStaffSpells, prepareStaffFor } from "../foundry/staves.ts";
+import { boostSlots } from "../spellbook/staff.ts";
 import { importLegacyStaves, legacyStaffEntries } from "../foundry/staves-import.ts";
 import { repairWand } from "../foundry/wands.ts";
 import { loadCollapsed, loadFilter, saveCollapsed, saveFilter } from "../foundry/filter-store.ts";
@@ -87,6 +88,7 @@ export class GrimoireApp extends ApplicationV2 {
                     repairWand: (wandId: string) => repairWand(this.actor, wandId),
                     prepareStaff: (staffId: string) => prepareStaffFor(this.actor, staffId),
                     importLegacyStaves: () => importLegacyStaves(this.actor),
+                    boostStaff: (staffId: string) => boostStaff(this.actor, staffId, this.#state.boost.slots),
                 },
             });
             flushSync();
@@ -167,6 +169,7 @@ export class GrimoireApp extends ApplicationV2 {
         this.#state.focus = snapshot.focus?.max ? snapshot.focus : null;
         this.#state.staves = snapshot.staves;
         this.#state.legacyStaves = legacyStaffEntries(this.actor).length;
+        this.#state.boost = { slots: boostSlots(snapshot.entries), used: boostUsedToday(this.actor) };
         this.#state.priority = normalizePriority(this.actor.getFlag(MODULE_ID, "priority"));
         this.#state.groups = groupByRank(aggregateSpells(snapshot));
     }

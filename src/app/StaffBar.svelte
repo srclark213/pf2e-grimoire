@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { StaffSnapshot } from "../spellbook/model.ts";
+    import { canBoostStaff, type BoostSlot } from "../spellbook/staff.ts";
 
     interface Props {
         staves: StaffSnapshot[];
@@ -7,9 +8,25 @@
         legacyCount: number;
         prepare: (staffId: string) => Promise<void>;
         importLegacy: () => Promise<void>;
+        /** The prepared caster's slot boost: slots they could expend, and whether today's is used */
+        boost: { slots: BoostSlot[]; used: boolean };
+        boostStaff: (staffId: string) => Promise<void>;
     }
 
-    const { staves, legacyCount, prepare, importLegacy }: Props = $props();
+    const { staves, legacyCount, prepare, importLegacy, boost, boostStaff }: Props = $props();
+
+    /** Only prepared casters (the animist included) have prepared slots to offer */
+    const isPreparedCaster = $derived(boost.slots.length > 0 || boost.used);
+
+    async function onBoost(staffId: string): Promise<void> {
+        if (busy) return;
+        busy = true;
+        try {
+            await boostStaff(staffId);
+        } finally {
+            busy = false;
+        }
+    }
 
     async function onImport(): Promise<void> {
         if (busy) return;
@@ -67,6 +84,18 @@
                 {/if}
                 {status(staff)}
             </span>
+            {#if isPreparedCaster && staff.preparedByMe}
+                <button
+                    type="button"
+                    class="action"
+                    disabled={busy || !canBoostStaff(staff.preparedByMe, boost.used, boost.slots)}
+                    data-tooltip={t(boost.used ? "Boost.Used" : "Boost.Button")}
+                    aria-label={t(boost.used ? "Boost.Used" : "Boost.Button")}
+                    onclick={() => onBoost(staff.id)}
+                >
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            {/if}
             <button
                 type="button"
                 class="action"

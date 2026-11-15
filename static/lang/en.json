@@ -63,6 +63,16 @@
             "ChooseHint": "{actor} carries more than one staff. Which one do you prepare today?",
             "ChooseNone": "None"
         },
+        "Boost": {
+            "Button": "Add charges from a spell slot (once a day)",
+            "Used": "Already added charges from a slot today",
+            "Title": "Add charges from a spell slot",
+            "Hint": "Expend one of your prepared spell slots to add charges equal to its rank to {staff}. You can do this once a day.",
+            "Slot": "Rank {rank} slot ({entry})",
+            "SlotWithSpell": "Rank {rank}: {spell} ({entry})",
+            "Confirm": "Expend slot",
+            "Done": "Added {charges} charges to {staff}."
+        },
         "Import": {
             "Notice": "Staves from the PF2e Staves module ({count}). Import them to use them here.",
             "Button": "Import",
