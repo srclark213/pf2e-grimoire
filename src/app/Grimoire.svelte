@@ -3,7 +3,7 @@
     import type { GrimoireState } from "./grimoire-state.svelte.ts";
     import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import type { RankButton } from "../spellbook/rank-buttons.ts";
-    import { availableChips, filterGroups, type FilterState } from "../spellbook/filter.ts";
+    import { availableChips, filterGroups, type ChipGroup, type FilterState } from "../spellbook/filter.ts";
     import FilterBar from "./FilterBar.svelte";
     import PrioritySettings from "./PrioritySettings.svelte";
     import SourceMenu from "./SourceMenu.svelte";
@@ -15,10 +15,11 @@
         cast: (option: CastOption) => Promise<void>;
         savePriority: (priority: PriorityGroup[] | null) => Promise<void>;
         setFilter: (filter: FilterState) => void;
+        setCollapsed: (collapsed: ChipGroup[]) => void;
         setTags: (spellIds: string[], tags: string[]) => Promise<void>;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setTags }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
@@ -90,7 +91,15 @@
     {/if}
 
     {#if allRows.length > 0}
-        <FilterBar filter={grimoire.filter} {chips} shown={shownCount} total={spellCount} {setFilter} />
+        <FilterBar
+            filter={grimoire.filter}
+            {chips}
+            shown={shownCount}
+            total={spellCount}
+            collapsed={grimoire.collapsed}
+            {setFilter}
+            {setCollapsed}
+        />
     {/if}
 
     <div class="groups">

@@ -1,5 +1,11 @@
 import { MODULE_ID } from "../constants.ts";
-import { normalizeFilter, type FilterState } from "../spellbook/filter.ts";
+import {
+    DEFAULT_COLLAPSED,
+    normalizeCollapsed,
+    normalizeFilter,
+    type ChipGroup,
+    type FilterState,
+} from "../spellbook/filter.ts";
 
 const SETTING = "filters";
 
@@ -34,4 +40,25 @@ export async function saveFilter(actorUuid: string, filter: FilterState): Promis
         filters[actorUuid] = filter;
     }
     await game.settings.set(MODULE_ID, SETTING, filters);
+}
+
+const COLLAPSED = "collapsedChipRows";
+
+/** Which chip rows are collapsed: one layout for every character, in this browser. */
+export function registerCollapsedSetting(): void {
+    game.settings.register(MODULE_ID, COLLAPSED, {
+        name: "PF2EGrimoire.Settings.CollapsedRows",
+        scope: "client",
+        config: false,
+        type: Array,
+        default: [...DEFAULT_COLLAPSED],
+    });
+}
+
+export function loadCollapsed(): ChipGroup[] {
+    return normalizeCollapsed(game.settings.get(MODULE_ID, COLLAPSED) as unknown);
+}
+
+export async function saveCollapsed(collapsed: ChipGroup[]): Promise<void> {
+    await game.settings.set(MODULE_ID, COLLAPSED, collapsed);
 }

@@ -4,6 +4,7 @@
         chipId,
         isEmptyFilter,
         toggleChip,
+        toggleCollapsed,
         type ChipGroup,
         type FilterState,
     } from "../spellbook/filter.ts";
@@ -13,12 +14,13 @@
         chips: Record<ChipGroup, string[]>;
         shown: number;
         total: number;
+        /** Rows showing only their selected chips */
+        collapsed: ChipGroup[];
         setFilter: (filter: FilterState) => void;
+        setCollapsed: (collapsed: ChipGroup[]) => void;
     }
 
-    const { filter, chips, shown, total, setFilter }: Props = $props();
-
-    let showTraits = $state(false);
+    const { filter, chips, shown, total, collapsed, setFilter, setCollapsed }: Props = $props();
 
     const t = (key: string, data?: Record<string, unknown>) => game.i18n.localize(`PF2EGrimoire.${key}`, data);
 
@@ -53,11 +55,18 @@
         return undefined;
     }
 
-    const visibleGroups = $derived(
-        CHIP_GROUPS.filter((g) => chips[g].length > 0 && (g !== "trait" || showTraits)),
-    );
-    const traitCount = $derived(chips.trait.length);
-    const selectedTraits = $derived(filter.chips.filter((c) => c.startsWith("trait:")).length);
+    const groups = $derived(CHIP_GROUPS.filter((g) => chips[g].length > 0));
+    const allCollapsed = $derived(groups.every((g) => collapsed.includes(g)));
+
+    /** The chips a row shows: all of them when open, only the selected ones when collapsed. */
+    function shownValues(group: ChipGroup): string[] {
+        if (!collapsed.includes(group)) return chips[group];
+        return chips[group].filter((value) => filter.chips.includes(chipId(group, value)));
+    }
+
+    function toggleAll(): void {
+        setCollapsed(allCollapsed ? [] : [...CHIP_GROUPS]);
+    }
 </script>
 
 <div class="filter-bar">
@@ -80,13 +89,36 @@
         >
             <i class="fa-solid fa-filter-circle-xmark"></i>
         </button>
+        {#if groups.length > 0}
+            <button
+                type="button"
+                class="clear"
+                data-tooltip={t(allCollapsed ? "Filter.ExpandAll" : "Filter.CollapseAll")}
+                aria-label={t(allCollapsed ? "Filter.ExpandAll" : "Filter.CollapseAll")}
+                onclick={toggleAll}
+            >
+                <i class={allCollapsed ? "fa-solid fa-angles-down" : "fa-solid fa-angles-up"}></i>
+            </button>
+        {/if}
     </div>
 
-    {#each visibleGroups as group (group)}
-        <div class="chip-row">
-            <span class="group-label">{t(`Filter.Group.${group}`)}</span>
+    {#each groups as group (group)}
+        {@const isCollapsed = collapsed.includes(group)}
+        {@const values = shownValues(group)}
+        {@const groupName = t(`Filter.Group.${group}`)}
+        <div class="chip-row" class:collapsed={isCollapsed}>
+            <button
+                type="button"
+                class="group-label"
+                aria-expanded={!isCollapsed}
+                data-tooltip={t(isCollapsed ? "Filter.Expand" : "Filter.Collapse", { group: groupName })}
+                onclick={() => setCollapsed(toggleCollapsed(collapsed, group))}
+            >
+                <i class={isCollapsed ? "fa-solid fa-caret-right" : "fa-solid fa-caret-down"}></i>
+                {groupName}
+            </button>
             <div class="chips">
-                {#each chips[group] as value (value)}
+                {#each values as value (value)}
                     {@const id = chipId(group, value)}
                     <button
                         type="button"
@@ -104,18 +136,14 @@
                         {/if}
                     </button>
                 {/each}
+                {#if isCollapsed && chips[group].length > values.length}
+                    <button type="button" class="more" onclick={() => setCollapsed(toggleCollapsed(collapsed, group))}>
+                        {t("Filter.HiddenCount", { count: chips[group].length - values.length })}
+                    </button>
+                {/if}
             </div>
         </div>
     {/each}
-
-    {#if traitCount > 0}
-        <button type="button" class="more" onclick={() => (showTraits = !showTraits)}>
-            {showTraits ? t("Filter.HideTraits") : t("Filter.ShowTraits", { count: traitCount })}
-            {#if !showTraits && selectedTraits > 0}
-                <span class="selected-note">{t("Filter.SelectedTraits", { count: selectedTraits })}</span>
-            {/if}
-        </button>
-    {/if}
 </div>
 
 <style>
@@ -164,12 +192,22 @@
         gap: 0.4rem;
     }
     .group-label {
+        all: unset;
         flex: none;
-        width: 4.5rem;
+        width: 5rem;
         font-size: 0.7rem;
         opacity: 0.65;
         text-transform: uppercase;
         letter-spacing: 0.03em;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .group-label i {
+        width: 0.6rem;
+    }
+    .group-label:hover,
+    .group-label:focus-visible {
+        opacity: 1;
     }
     .chips {
         display: flex;
@@ -200,14 +238,14 @@
     }
     .more {
         all: unset;
-        align-self: flex-start;
-        font-size: 0.75rem;
-        opacity: 0.75;
+        font-size: 0.7rem;
+        line-height: 1.35rem;
+        opacity: 0.6;
         cursor: pointer;
         text-decoration: underline dotted;
     }
-    .selected-note {
-        margin-left: 0.3rem;
-        color: #c7892b;
+    .more:hover,
+    .more:focus-visible {
+        opacity: 1;
     }
 </style>

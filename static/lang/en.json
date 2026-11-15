@@ -97,9 +97,11 @@
             "Count": "{shown} of {total}",
             "Clear": "Clear search and filters",
             "NoMatches": "No spells match the current filter.",
-            "ShowTraits": "Show traits ({count})",
-            "HideTraits": "Hide traits",
-            "SelectedTraits": "{count} selected",
+            "Expand": "Show {group}",
+            "Collapse": "Hide {group}",
+            "CollapseAll": "Hide all filter rows",
+            "ExpandAll": "Show all filter rows",
+            "HiddenCount": "{count} more",
             "Group": {
                 "defense": "Targets",
                 "damage": "Damage",
@@ -110,7 +112,8 @@
             }
         },
         "Settings": {
-            "Filters": "Remembered Grimoire filters"
+            "Filters": "Remembered Grimoire filters",
+            "CollapsedRows": "Collapsed Grimoire filter rows"
         },
         "Tags": {
             "Edit": "Edit tags",

@@ -3,8 +3,8 @@ import type { ItemPF2e } from "@item";
 import { flushSync, mount, unmount } from "svelte";
 import { MODULE_ID } from "../constants.ts";
 import { castOption } from "../foundry/cast.ts";
-import { loadFilter, saveFilter } from "../foundry/filter-store.ts";
-import type { FilterState } from "../spellbook/filter.ts";
+import { loadCollapsed, loadFilter, saveCollapsed, saveFilter } from "../foundry/filter-store.ts";
+import type { ChipGroup, FilterState } from "../spellbook/filter.ts";
 import { snapshotActor } from "../foundry/snapshot.ts";
 import { aggregateSpells, groupByRank } from "../spellbook/aggregator.ts";
 import { cantripRank } from "../spellbook/labels.ts";
@@ -57,6 +57,7 @@ export class GrimoireApp extends ApplicationV2 {
         super({ ...options, id: GrimoireApp.idFor(actor) });
         this.actor = actor;
         this.#state.filter = loadFilter(actor.uuid);
+        this.#state.collapsed = loadCollapsed();
     }
 
     override get title(): string {
@@ -78,6 +79,7 @@ export class GrimoireApp extends ApplicationV2 {
                     cast: (option: CastOption) => castOption(this.actor, option),
                     savePriority: (priority: PriorityGroup[] | null) => this.#savePriority(priority),
                     setFilter: (filter: FilterState) => this.#setFilter(filter),
+                    setCollapsed: (collapsed: ChipGroup[]) => this.#setCollapsed(collapsed),
                     setTags: (spellIds: string[], tags: string[]) => this.#setTags(spellIds, tags),
                 },
             });
@@ -131,6 +133,12 @@ export class GrimoireApp extends ApplicationV2 {
     #setFilter(filter: FilterState): void {
         this.#state.filter = filter;
         this.#saveFilterSoon();
+    }
+
+    /** Collapses or expands filter rows now and remembers the layout for every character. */
+    #setCollapsed(collapsed: ChipGroup[]): void {
+        this.#state.collapsed = collapsed;
+        void saveCollapsed(collapsed);
     }
 
     /** Saves the character's source priority in its flags; null resets it to the default. */

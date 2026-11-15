@@ -132,3 +132,17 @@ export function normalizeFilter(saved: unknown): FilterState {
         : [];
     return { search, chips: [...new Set(chips)] };
 }
+
+/** Chip rows start collapsed only for traits: there are many and they're rarely the first thing filtered on. */
+export const DEFAULT_COLLAPSED: readonly ChipGroup[] = ["trait"];
+
+/** Reads a saved list of collapsed chip rows, dropping anything that isn't a chip group. */
+export function normalizeCollapsed(saved: unknown): ChipGroup[] {
+    if (!Array.isArray(saved)) return [...DEFAULT_COLLAPSED];
+    return CHIP_GROUPS.filter((g) => saved.includes(g));
+}
+
+/** Collapses or expands one chip row. */
+export function toggleCollapsed(collapsed: readonly ChipGroup[], group: ChipGroup): ChipGroup[] {
+    return collapsed.includes(group) ? collapsed.filter((g) => g !== group) : CHIP_GROUPS.filter((g) => g === group || collapsed.includes(g));
+}

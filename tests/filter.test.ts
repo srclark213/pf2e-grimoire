@@ -3,6 +3,8 @@ import { aggregateSpells, groupByRank } from "../src/spellbook/aggregator.ts";
 import { extractFacets } from "../src/spellbook/facets.ts";
 import {
     availableChips,
+    normalizeCollapsed,
+    toggleCollapsed,
     EMPTY_FILTER,
     filterGroups,
     normalizeFilter,
@@ -110,5 +112,18 @@ describe("toggleChip and normalizeFilter", () => {
             search: "fi",
             chips: ["damage:fire"],
         });
+    });
+});
+
+describe("collapsed chip rows", () => {
+    it("defaults to traits collapsed and drops unknown groups", () => {
+        expect(normalizeCollapsed(undefined)).toEqual(["trait"]);
+        expect(normalizeCollapsed(["tag", "bogus", 3, "defense"])).toEqual(["defense", "tag"]);
+        expect(normalizeCollapsed([])).toEqual([]);
+    });
+
+    it("toggles one row, keeping display order", () => {
+        expect(toggleCollapsed(["trait"], "defense")).toEqual(["defense", "trait"]);
+        expect(toggleCollapsed(["defense", "trait"], "trait")).toEqual(["defense"]);
     });
 });
