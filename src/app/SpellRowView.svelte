@@ -47,9 +47,9 @@
         return game.i18n.localize(key, { rank: option.rank, source: option.entryName });
     }
 
-    /** Wand and scroll names are long ("Wand of Teleport (Rank 6)"), so their badge shows the kind. */
+    /** Item names are long ("Wand of Teleport (Rank 6)"), so wand, scroll and staff badges show the kind. */
     function isItem(kind: string): boolean {
-        return kind === "wand" || kind === "scroll";
+        return kind === "wand" || kind === "scroll" || kind === "staff";
     }
 
     function kindLabel(kind: string, badge = false): string {
@@ -310,6 +310,9 @@
     }
     .badge[data-kind="wand"] {
         --badge: #b5523b;
+    }
+    .badge[data-kind="staff"] {
+        --badge: #8c6a3f;
     }
     .badge[data-kind="scroll"] {
         --badge: #a08a4c;

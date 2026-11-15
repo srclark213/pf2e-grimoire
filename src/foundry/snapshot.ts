@@ -52,7 +52,7 @@ export function snapshotActor(actor: CharacterPF2e): ActorSnapshot {
         focus: focus ? { value: focus.value, max: focus.max } : null,
         entries,
         consumables: snapshotConsumables(actor),
-        staves: snapshotStaves(actor),
+        staves: snapshotStaves(actor, snapshotSpell),
     };
 }
 

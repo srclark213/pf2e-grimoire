@@ -1,11 +1,14 @@
 import type { CharacterPF2e } from "@actor";
-import type { WeaponPF2e } from "@item";
+import type { ItemPF2e, SpellcastingEntryPF2e, SpellPF2e, WeaponPF2e } from "@item";
 import { MODULE_ID } from "../constants.ts";
-import type { StaffSnapshot } from "../spellbook/model.ts";
+import type { SpellSnapshot, StaffSnapshot, StaffSpellSnapshot } from "../spellbook/model.ts";
 import {
     prepareStaff,
     readStaffData,
     restPreparation,
+    spendCharges,
+    staffCost,
+    staffEntries,
     unprepareStaff,
     type StaffData,
 } from "../spellbook/staff.ts";
@@ -49,10 +52,78 @@ export function highestSlotRank(actor: CharacterPF2e): number {
     return highest;
 }
 
-export function snapshotStaves(actor: CharacterPF2e): StaffSnapshot[] {
+/** Compendium spell data by uuid, loaded once per session. Null means the uuid didn't resolve to a spell. */
+const spellSources = new Map<string, object | null>();
+
+/** Loads the spell data every carried staff refers to, so the snapshot can stay synchronous. */
+export async function loadStaffSpells(actor: CharacterPF2e): Promise<void> {
+    const uuids = new Set(
+        carriedStaves(actor).flatMap((staff) => staffEntries(readStaff(staff).spells).map((e) => e.spell.uuid)),
+    );
+    await Promise.all(
+        [...uuids]
+            .filter((uuid) => !spellSources.has(uuid))
+            .map(async (uuid) => {
+                const doc = (await fromUuid(uuid).catch(() => null)) as ItemPF2e | null;
+                spellSources.set(uuid, doc?.isOfType?.("spell") ? doc.toObject() : null);
+            }),
+    );
+}
+
+/**
+ * A temporary spell owned by the character, as the staff casts it: at the staff rank, or for a cantrip at
+ * the character's cantrip rank. pf2e builds wand and scroll spells the same way.
+ */
+export function staffSpell(
+    actor: CharacterPF2e,
+    staff: WeaponPF2e<CharacterPF2e>,
+    uuid: string,
+    staffRank: number,
+): SpellPF2e<CharacterPF2e> | null {
+    const source = spellSources.get(uuid);
+    if (!source) return null;
+    const data = foundry.utils.deepClone(source) as { system: { location: Record<string, unknown> } };
+    data.system.location = { value: null, heightenedLevel: staffRank > 0 ? staffRank : null };
+    return new CONFIG.Item.documentClass(data as never, { parent: actor, parentItem: staff } as never) as SpellPF2e<
+        CharacterPF2e
+    >;
+}
+
+/**
+ * The entry that casts a staff spell: a prepared or spontaneous entry whose tradition or list has the
+ * spell, with the highest DC (as pf2e does for wands and scrolls).
+ */
+export function staffCastingEntry(
+    actor: CharacterPF2e,
+    spell: SpellPF2e<CharacterPF2e>,
+    staff: WeaponPF2e<CharacterPF2e>,
+): SpellcastingEntryPF2e<CharacterPF2e> | null {
+    let best: SpellcastingEntryPF2e<CharacterPF2e> | null = null;
+    for (const entry of actor.spellcasting.regular) {
+        if (!entry.statistic || !entry.canCast(spell, { origin: staff })) continue;
+        if (!best || entry.statistic.dc.value > (best.statistic?.dc.value ?? 0)) best = entry;
+    }
+    return best;
+}
+
+export function snapshotStaves(
+    actor: CharacterPF2e,
+    toSpell: (spell: SpellPF2e<CharacterPF2e>) => SpellSnapshot,
+): StaffSnapshot[] {
     return carriedStaves(actor).map((staff) => {
         const data = readStaff(staff);
         const preparedByMe = data.preparedBy === actor.id;
+        const spells: StaffSpellSnapshot[] = [];
+        for (const { rank, spell: ref } of staffEntries(data.spells)) {
+            const spell = staffSpell(actor, staff, ref.uuid, rank);
+            if (!spell) continue;
+            spells.push({
+                rank,
+                uuid: ref.uuid,
+                spell: toSpell(spell),
+                castable: !!staffCastingEntry(actor, spell, staff),
+            });
+        }
         return {
             id: staff.id,
             name: staff.name,
@@ -60,8 +131,48 @@ export function snapshotStaves(actor: CharacterPF2e): StaffSnapshot[] {
             preparedByMe,
             preparedByOther: data.preparedBy !== null && !preparedByMe,
             charges: preparedByMe ? { ...data.charges } : { value: 0, max: 0 },
+            spells,
         };
     });
+}
+
+/**
+ * Casts a spell from a staff the character prepared: spends charges equal to its rank on the staff
+ * (cantrips are free), then posts the spell through the best entry without spending a slot.
+ * Warns, but still casts, when the staff isn't held.
+ */
+export async function castFromStaff(
+    actor: CharacterPF2e,
+    staffId: string,
+    uuid: string,
+    staffRank: number,
+): Promise<void> {
+    const staff = carriedStaves(actor).find((s) => s.id === staffId);
+    const spell = staff ? staffSpell(actor, staff, uuid, staffRank) : null;
+    if (!staff || !spell) {
+        ui.notifications.error(t("Error.SpellNotFound"));
+        return;
+    }
+    const data = readStaff(staff);
+    const charges = staffCost(staffRank);
+    if (data.preparedBy !== actor.id) {
+        ui.notifications.warn(t("Reason.not-prepared"));
+        return;
+    }
+    if (data.charges.value < charges) {
+        ui.notifications.warn(t("Reason.no-charges"));
+        return;
+    }
+    const entry = staffCastingEntry(actor, spell, staff);
+    if (!entry) {
+        ui.notifications.warn(t("Reason.cannot-cast"));
+        return;
+    }
+    if (!staff.isHeld) ui.notifications.warn(t("Staff.NotHeld"));
+
+    if (charges > 0) await writeStaff(staff, spendCharges(data, charges));
+    spell.system.location.value = entry.id;
+    await entry.cast(spell, { consume: false, rank: spell.rank });
 }
 
 /**

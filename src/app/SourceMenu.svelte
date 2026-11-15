@@ -56,6 +56,10 @@
                 return t("Cost.Wand", { value: cost.value, max: cost.max });
             case "scroll":
                 return t("Cost.Scroll", { quantity: cost.quantity });
+            case "staff":
+                return cost.charges > 0
+                    ? t("Cost.Staff", { charges: cost.charges, value: cost.value })
+                    : t("Cost.StaffCantrip");
             case "overcharge":
                 return t(cost.destroys ? "Cost.OverchargeRepeat" : "Cost.Overcharge");
         }

@@ -3,7 +3,7 @@ import type { ItemPF2e } from "@item";
 import { flushSync, mount, unmount } from "svelte";
 import { MODULE_ID } from "../constants.ts";
 import { castOption } from "../foundry/cast.ts";
-import { prepareStaffFor } from "../foundry/staves.ts";
+import { loadStaffSpells, prepareStaffFor } from "../foundry/staves.ts";
 import { repairWand } from "../foundry/wands.ts";
 import { loadCollapsed, loadFilter, saveCollapsed, saveFilter } from "../foundry/filter-store.ts";
 import type { ChipGroup, FilterState } from "../spellbook/filter.ts";
@@ -52,7 +52,7 @@ export class GrimoireApp extends ApplicationV2 {
     #state = new GrimoireState();
     #component: Record<string, unknown> | null = null;
     #hookIds: [string, number][] = [];
-    #refreshSoon = foundry.utils.debounce(() => this.#refresh(), 50);
+    #refreshSoon = foundry.utils.debounce(() => void this.#refresh(), 50);
     #saveFilterSoon = foundry.utils.debounce(() => void saveFilter(this.actor.uuid, this.#state.filter), 400);
 
     constructor({ actor, ...options }: GrimoireAppOptions) {
@@ -67,7 +67,7 @@ export class GrimoireApp extends ApplicationV2 {
     }
 
     protected override async _renderHTML(): Promise<null> {
-        this.#refresh();
+        await this.#refresh();
         return null;
     }
 
@@ -155,7 +155,9 @@ export class GrimoireApp extends ApplicationV2 {
     }
 
     /** Re-reads the actor and replaces the window's state. */
-    #refresh(): void {
+    async #refresh(): Promise<void> {
+        // Staff spells live in compendiums; load any new ones before reading the actor.
+        await loadStaffSpells(this.actor);
         const snapshot = snapshotActor(this.actor);
         this.#state.actorName = this.actor.name;
         this.#state.entryCount = snapshot.entries.length;

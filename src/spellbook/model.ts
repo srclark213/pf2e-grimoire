@@ -108,6 +108,19 @@ export interface StaffSnapshot {
     /** Someone else prepared it, so this character can't cast from it today */
     preparedByOther: boolean;
     charges: UsesSnapshot;
+    /** The staff's spells whose compendium data has loaded */
+    spells: StaffSpellSnapshot[];
+}
+
+/** One spell on a staff, at one rank */
+export interface StaffSpellSnapshot {
+    /** The rank the staff casts it at: 0 for cantrips, which heighten like the caster's own */
+    rank: number;
+    uuid: string;
+    /** The spell as the staff casts it (cantrips at the character's cantrip rank) */
+    spell: SpellSnapshot;
+    /** One of the character's prepared or spontaneous entries can cast it (its tradition or list) */
+    castable: boolean;
 }
 
 export interface ActorSnapshot {
@@ -135,10 +148,20 @@ export type CastCost =
     | { type: "wand"; value: number; max: number }
     | { type: "scroll"; quantity: number }
     /** `destroys`: the wand was already overcharged today, so this destroys it with no spell */
-    | { type: "overcharge"; destroys: boolean };
+    | { type: "overcharge"; destroys: boolean }
+    /** `charges` spent from a staff that has `value` left */
+    | { type: "staff"; charges: number; value: number };
 
 /** Why an option can't be cast right now */
-export type UnavailableReason = "expended" | "no-slots" | "no-uses" | "no-focus" | "cannot-cast" | "broken";
+export type UnavailableReason =
+    | "expended"
+    | "no-slots"
+    | "no-uses"
+    | "no-focus"
+    | "cannot-cast"
+    | "broken"
+    | "not-prepared"
+    | "no-charges";
 
 /** One way to cast a spell right now, at one rank */
 export interface CastOption {
@@ -146,8 +169,12 @@ export interface CastOption {
     /** The spellcasting entry id, or the wand or scroll item id */
     entryId: string;
     entryName: string;
-    /** The spell item to cast (for wands and scrolls, the consumable item id) */
+    /** The spell item to cast (for wands, scrolls and staves, the item id) */
     spellId: string;
+    /** Staves: the compendium spell to cast */
+    spellUuid?: string;
+    /** Staves: the rank on the staff's list (0 for cantrips), which sets the charge cost */
+    staffRank?: number;
     rank: number;
     /** For prepared casters, which slot at `rank` is spent */
     slotIndex?: number;
@@ -157,9 +184,9 @@ export interface CastOption {
     reason?: UnavailableReason;
 }
 
-/** A spellcasting entry, wand or scroll that has this spell, shown as a badge on the row */
+/** A spellcasting entry, wand, scroll or staff that has this spell, shown as a badge on the row */
 export interface SpellSource {
-    /** The spellcasting entry id, or the wand or scroll item id */
+    /** The spellcasting entry id, or the wand, scroll or staff item id */
     entryId: string;
     entryName: string;
     kind: SourceKind;

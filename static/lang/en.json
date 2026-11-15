@@ -46,7 +46,9 @@
             "Wand": "Daily use ({value} of {max} left)",
             "Scroll": "Uses up the scroll ({quantity} carried)",
             "Overcharge": "Overcharge: DC 10 flat check, breaks or destroys the wand",
-            "OverchargeRepeat": "Destroys the wand: already overcharged today"
+            "OverchargeRepeat": "Destroys the wand: already overcharged today",
+            "Staff": "{charges} staff charges ({value} left)",
+            "StaffCantrip": "Free staff cantrip"
         },
         "Staff": {
             "Charges": "{value} of {max} charges",
@@ -73,7 +75,8 @@
         },
         "Badge": {
             "wand": "Wand",
-            "scroll": "Scroll"
+            "scroll": "Scroll",
+            "staff": "Staff"
         },
         "Reason": {
             "expended": "This slot is already used",
@@ -81,7 +84,9 @@
             "no-uses": "No uses left today",
             "no-focus": "No focus points left",
             "cannot-cast": "Not on any of your spell lists",
-            "broken": "Broken: repair it before using it again"
+            "broken": "Broken: repair it before using it again",
+            "not-prepared": "You haven't prepared this staff today",
+            "no-charges": "Not enough charges left"
         },
         "Priority": {
             "Open": "Casting priority",

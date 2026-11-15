@@ -1,12 +1,15 @@
 import { isAutoPickable } from "./cast-resolver.ts";
 import { categorize } from "./categories.ts";
 import { canOvercharge } from "./overcharge.ts";
+import { staffCost } from "./staff.ts";
 import { uniqueTags } from "./tags.ts";
 import type {
     ActorSnapshot,
     CastOption,
     ConsumableSnapshot,
     EntrySnapshot,
+    StaffSnapshot,
+    StaffSpellSnapshot,
     RankGroup,
     SourceKind,
     SpellRow,
@@ -51,6 +54,20 @@ export function aggregateSpells(actor: ActorSnapshot): SpellRow[] {
             fixedRanks.set(row.key, [...(fixedRanks.get(row.key) ?? []), item.spell.baseRank]);
         }
         row.castOptions.push(...consumableOptions(item));
+    }
+
+    // Staff spells join their rows too, one cast option per rank the staff lists them at.
+    for (const staff of actor.staves) {
+        for (const listed of staff.spells) {
+            const row = getOrCreateRow(rows, listed.spell);
+            if (!row.sources.some((s) => s.entryId === staff.id)) {
+                row.sources.push({ entryId: staff.id, entryName: staff.name, kind: "staff", available: false });
+            }
+            if (!autoHeightens(listed.spell)) {
+                fixedRanks.set(row.key, [...(fixedRanks.get(row.key) ?? []), listed.spell.baseRank]);
+            }
+            row.castOptions.push(staffOption(staff, listed));
+        }
     }
 
     const result = [...rows.values()];
@@ -229,6 +246,33 @@ function consumableOptions(item: ConsumableSnapshot): CastOption[] {
         });
     }
     return options;
+}
+
+/**
+ * A staff spell costs charges equal to its rank on the staff (cantrips cost none) and can only be cast by
+ * the character who prepared the staff today, through an entry whose tradition or list has the spell.
+ */
+function staffOption(staff: StaffSnapshot, listed: StaffSpellSnapshot): CastOption {
+    const charges = staffCost(listed.rank);
+    const reason: UnavailableReason | undefined = !listed.castable
+        ? "cannot-cast"
+        : !staff.preparedByMe
+          ? "not-prepared"
+          : staff.charges.value < charges
+            ? "no-charges"
+            : undefined;
+    const option: CastOption = {
+        kind: "staff",
+        entryId: staff.id,
+        entryName: staff.name,
+        spellId: staff.id,
+        spellUuid: listed.uuid,
+        staffRank: listed.rank,
+        rank: listed.spell.rank,
+        available: !reason,
+        cost: { type: "staff", charges, value: staff.charges.value },
+    };
+    return reason ? { ...option, reason } : option;
 }
 
 /** Casting from a spontaneous (or flexible) caster's shared slots at a rank */

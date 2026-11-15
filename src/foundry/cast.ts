@@ -1,6 +1,7 @@
 import type { CharacterPF2e } from "@actor";
 import type { OneToTen } from "@module/data.ts";
 import type { CastOption } from "../spellbook/model.ts";
+import { castFromStaff } from "./staves.ts";
 import { overchargeWand } from "./wands.ts";
 
 /**
@@ -9,6 +10,9 @@ import { overchargeWand } from "./wands.ts";
  */
 export async function castOption(actor: CharacterPF2e, option: CastOption): Promise<void> {
     if (option.kind === "wand-overcharge") return overchargeWand(actor, option.entryId);
+    if (option.kind === "staff" && option.spellUuid) {
+        return castFromStaff(actor, option.entryId, option.spellUuid, option.staffRank ?? 0);
+    }
     if (option.kind === "wand" || option.kind === "scroll") {
         // pf2e's consume() casts the embedded spell (or runs Trick Magic Item), then spends the wand's
         // daily use or uses up the scroll.
