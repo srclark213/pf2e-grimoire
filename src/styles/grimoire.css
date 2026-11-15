@@ -1,0 +1,4 @@
+/* PF2e Grimoire styles. Everything is scoped under .pf2e-grimoire. */
+.pf2e-grimoire {
+    --grimoire-gap: 0.5rem;
+}

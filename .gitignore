@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.zip
+foundry.config.json
+.vite/
+coverage/
+planning/.obsidian/workspace*.json

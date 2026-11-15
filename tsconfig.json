@@ -1,0 +1,62 @@
+{
+    // Type-checking only; Vite does the bundling.
+    // pf2e source is pulled in from the vendor/pf2e submodule for its types.
+    // Only ever `import type` from the pf2e aliases: a value import would bundle pf2e code into our module.
+    "compilerOptions": {
+        "target": "es2024",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "lib": [
+            "ES2024",
+            "ESNext.Array",
+            "ESNext.AsyncIterable",
+            "ESNext.Collection",
+            "ESNext.Intl",
+            "ESNext.Iterator",
+            "ESNext.Promise",
+            "DOM",
+            "DOM.Iterable",
+            "DOM.AsyncIterable"
+        ],
+        "noEmit": true,
+        "strict": true,
+        "noFallthroughCasesInSwitch": true,
+        "skipLibCheck": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "allowImportingTsExtensions": true,
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": false,
+        "allowUmdGlobalAccess": true,
+        "resolveJsonModule": true,
+        "useDefineForClassFields": true,
+        "paths": {
+            "@actor": ["./vendor/pf2e/src/module/actor/index.ts"],
+            "@actor/*": ["./vendor/pf2e/src/module/actor/*"],
+            "@item": ["./vendor/pf2e/src/module/item/index.ts"],
+            "@item/*": ["./vendor/pf2e/src/module/item/*"],
+            "@scene": ["./vendor/pf2e/src/module/scene/index.ts"],
+            "@scene/*": ["./vendor/pf2e/src/module/scene/*"],
+            "@system/*": ["./vendor/pf2e/src/module/system/*"],
+            "@module/*": ["./vendor/pf2e/src/module/*"],
+            "@scripts/*": ["./vendor/pf2e/src/scripts/*"],
+            "@common/*": ["./vendor/pf2e/types/foundry/common/*"],
+            "@client/*": ["./vendor/pf2e/types/foundry/client/*"],
+            "@util": ["./vendor/pf2e/src/util/index.ts"],
+            "@util/*": ["./vendor/pf2e/src/util/*"]
+        },
+        "types": ["jquery", "node", "showdown", "tooltipster"]
+    },
+    "include": [
+        "./src/**/*",
+        "./tests/**/*.ts",
+        "./vendor/pf2e/src/global.ts",
+        "./vendor/pf2e/types/foundry/global-external.d.mts",
+        "./vite.config.ts",
+        "./vitest.config.ts"
+    ]
+}

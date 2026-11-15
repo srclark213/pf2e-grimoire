@@ -1,0 +1,39 @@
+{
+    "PF2EGrimoire": {
+        "Title": "Grimoire",
+        "WindowTitle": "Grimoire: {actor}",
+        "SheetButton": "Grimoire",
+        "Summary": "{spells} spells from {entries} spellcasting entries",
+        "NoSpells": "This character has no spells.",
+        "Rank": "Rank {rank}",
+        "Keybinding": {
+            "Open": {
+                "Name": "Open Grimoire",
+                "Hint": "Opens the Grimoire for your controlled token's character, or your assigned character."
+            }
+        },
+        "Warning": {
+            "NotCharacter": "Select a character's token, or assign yourself a character, to open the Grimoire."
+        },
+        "CantripsAtRank": "Cantrips (rank {rank})",
+        "FocusPoints": "Focus points: {value} of {max}",
+        "Kind": {
+            "prepared": "prepared",
+            "spontaneous": "spontaneous",
+            "innate": "innate",
+            "focus": "focus",
+            "staff": "staff",
+            "staff+slot": "staff and slot",
+            "wand": "wand",
+            "wand-overcharge": "overcharged wand",
+            "scroll": "scroll"
+        },
+        "CantripsAndFocus": "Cantrips and focus spells (rank {rank})",
+        "FocusAtRank": "Focus spells (rank {rank})",
+        "CastAt": "Cast at rank {rank} ({source})",
+        "SpentAt": "Rank {rank}: spent ({source})",
+        "Error": {
+            "SpellNotFound": "That spell or spellcasting entry no longer exists on this character."
+        }
+    }
+}
