@@ -12,6 +12,8 @@ export class GrimoireState {
     focus: UsesSnapshot | null = $state.raw(null);
     /** Staves the character carries */
     staves: StaffSnapshot[] = $state.raw([]);
+    /** PF2e Staves entries still on the character, waiting to be imported */
+    legacyStaves = $state(0);
     /** The character's source priority order, from its flags */
     priority: PriorityGroup[] = $state.raw([...DEFAULT_PRIORITY]);
     /** This user's current search and chips for this character */

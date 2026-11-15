@@ -3,10 +3,23 @@
 
     interface Props {
         staves: StaffSnapshot[];
+        /** PF2e Staves entries still on the character */
+        legacyCount: number;
         prepare: (staffId: string) => Promise<void>;
+        importLegacy: () => Promise<void>;
     }
 
-    const { staves, prepare }: Props = $props();
+    const { staves, legacyCount, prepare, importLegacy }: Props = $props();
+
+    async function onImport(): Promise<void> {
+        if (busy) return;
+        busy = true;
+        try {
+            await importLegacy();
+        } finally {
+            busy = false;
+        }
+    }
 
     const t = (key: string, data?: Record<string, unknown>) => game.i18n.localize(`PF2EGrimoire.${key}`, data);
 
@@ -30,6 +43,13 @@
 </script>
 
 <ul class="staff-bar">
+    {#if legacyCount > 0}
+        <li class="legacy">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>{t("Import.Notice", { count: legacyCount })}</span>
+            <button type="button" class="import" disabled={busy} onclick={onImport}>{t("Import.Button")}</button>
+        </li>
+    {/if}
     {#each staves as staff (staff.id)}
         <li class="staff" class:prepared={staff.preparedByMe}>
             <i class="fa-solid fa-staff-snake icon"></i>
@@ -76,6 +96,26 @@
         align-items: center;
         gap: 0.4rem;
         font-size: 0.85rem;
+    }
+    .legacy {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.2rem 0.3rem;
+        border-radius: 4px;
+        background: color-mix(in srgb, #4a7fc1 20%, transparent);
+        font-size: 0.8rem;
+    }
+    .legacy span {
+        flex: 1;
+    }
+    .import {
+        flex: none;
+        width: auto;
+        height: 1.5rem;
+        padding: 0 0.5rem;
+        font-size: 0.8rem;
+        line-height: 1;
     }
     .icon {
         width: 1rem;

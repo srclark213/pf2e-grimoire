@@ -63,6 +63,17 @@
             "ChooseHint": "{actor} carries more than one staff. Which one do you prepare today?",
             "ChooseNone": "None"
         },
+        "Import": {
+            "Notice": "Staves from the PF2e Staves module ({count}). Import them to use them here.",
+            "Button": "Import",
+            "Title": "Import from PF2e Staves",
+            "Intro": "This moves {actor}'s staves from PF2e Staves into the Grimoire:",
+            "Line": "{staff}: its spell list, and {charges} charges for today",
+            "Missing": "{entry}: no matching staff found, left as it is",
+            "Warning": "The PF2e Staves spellcasting entries and their spells are then deleted from the character. This can't be undone.",
+            "Done": "Imported {count} staves for {actor}.",
+            "NoneCarried": "The imported staff isn't carried, so it won't show in the Grimoire until it is."
+        },
         "Overcharge": {
             "Title": "Overcharge wand",
             "Confirm": "Cast {spell} from {wand} again? After the spell, you roll a DC {dc} flat check. On a success the wand is broken; on a failure it is destroyed.",

@@ -20,9 +20,10 @@
         setTags: (spellIds: string[], tags: string[]) => Promise<void>;
         repairWand: (wandId: string) => Promise<void>;
         prepareStaff: (staffId: string) => Promise<void>;
+        importLegacyStaves: () => Promise<void>;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
@@ -93,8 +94,13 @@
         <PrioritySettings priority={grimoire.priority} save={savePriority} close={() => (showSettings = false)} />
     {/if}
 
-    {#if grimoire.staves.length > 0}
-        <StaffBar staves={grimoire.staves} prepare={prepareStaff} />
+    {#if grimoire.staves.length > 0 || grimoire.legacyStaves > 0}
+        <StaffBar
+            staves={grimoire.staves}
+            legacyCount={grimoire.legacyStaves}
+            prepare={prepareStaff}
+            importLegacy={importLegacyStaves}
+        />
     {/if}
 
     {#if allRows.length > 0}
