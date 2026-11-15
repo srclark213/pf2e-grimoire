@@ -1,5 +1,11 @@
 import { extractFacets } from "../../src/spellbook/facets.ts";
-import type { ActorSnapshot, EntrySnapshot, SlotRankSnapshot, SpellSnapshot } from "../../src/spellbook/model.ts";
+import type {
+    ActorSnapshot,
+    ConsumableSnapshot,
+    EntrySnapshot,
+    SlotRankSnapshot,
+    SpellSnapshot,
+} from "../../src/spellbook/model.ts";
 
 /** Builders for snapshots shaped like what the adapter reads off a pf2e actor. */
 
@@ -52,5 +58,24 @@ export function entry(
 }
 
 export function actor(entries: EntrySnapshot[], overrides: Partial<ActorSnapshot> = {}): ActorSnapshot {
-    return { level: 5, focus: null, entries, ...overrides };
+    return { level: 5, focus: null, entries, consumables: [], ...overrides };
+}
+
+/** A wand or scroll holding `held`, cast at `held.rank`. Wands default to an unused daily use. */
+export function consumable(
+    category: ConsumableSnapshot["category"],
+    held: SpellSnapshot,
+    overrides: Partial<ConsumableSnapshot> = {},
+): ConsumableSnapshot {
+    const label = category === "wand" ? "Wand" : "Scroll";
+    return {
+        id: `${category}-${held.slug}-id`,
+        name: `${label} of ${held.name} (Rank ${held.rank})`,
+        category,
+        spell: held,
+        uses: { value: 1, max: 1 },
+        quantity: 1,
+        castable: true,
+        ...overrides,
+    };
 }

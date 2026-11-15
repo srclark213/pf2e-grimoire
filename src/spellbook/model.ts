@@ -76,11 +76,28 @@ export interface EntrySnapshot {
     spells: SpellSnapshot[];
 }
 
+/** A wand or scroll the character carries, with the spell it holds */
+export interface ConsumableSnapshot {
+    /** The consumable item's id on the actor */
+    id: string;
+    name: string;
+    category: "wand" | "scroll";
+    /** The embedded spell, at the rank the item casts it */
+    spell: SpellSnapshot;
+    /** Wands: today's use. Scrolls: always 1 of 1. */
+    uses: UsesSnapshot;
+    quantity: number;
+    /** Some spellcasting entry can cast it, or the character has Trick Magic Item */
+    castable: boolean;
+}
+
 export interface ActorSnapshot {
     level: number;
     /** The focus pool, or null if the actor has none */
     focus: UsesSnapshot | null;
     entries: EntrySnapshot[];
+    /** Identified wands and scrolls that hold a spell */
+    consumables: ConsumableSnapshot[];
 }
 
 /** What casting through an option spends, with what is left of it */
@@ -89,17 +106,20 @@ export type CastCost =
     | { type: "prepared-slot" }
     | { type: "slot"; value: number; max: number }
     | { type: "innate"; value: number; max: number }
-    | { type: "focus"; value: number };
+    | { type: "focus"; value: number }
+    | { type: "wand"; value: number; max: number }
+    | { type: "scroll"; quantity: number };
 
 /** Why an option can't be cast right now */
-export type UnavailableReason = "expended" | "no-slots" | "no-uses" | "no-focus";
+export type UnavailableReason = "expended" | "no-slots" | "no-uses" | "no-focus" | "cannot-cast";
 
 /** One way to cast a spell right now, at one rank */
 export interface CastOption {
     kind: SourceKind;
+    /** The spellcasting entry id, or the wand or scroll item id */
     entryId: string;
     entryName: string;
-    /** The spell item to cast */
+    /** The spell item to cast (for wands and scrolls, the consumable item id) */
     spellId: string;
     rank: number;
     /** For prepared casters, which slot at `rank` is spent */
@@ -110,8 +130,9 @@ export interface CastOption {
     reason?: UnavailableReason;
 }
 
-/** A spellcasting entry that has this spell, shown as a badge on the row */
+/** A spellcasting entry, wand or scroll that has this spell, shown as a badge on the row */
 export interface SpellSource {
+    /** The spellcasting entry id, or the wand or scroll item id */
     entryId: string;
     entryName: string;
     kind: SourceKind;
@@ -134,7 +155,7 @@ export interface SpellRow {
     categories: SpellCategory[];
     /** The player's own tags (GRIM-15), merged from every spell in the row */
     tags: string[];
-    /** Spell item ids on the actor that this row merges */
+    /** Spell item ids on the actor that this row merges. Spells inside wands and scrolls aren't listed. */
     spellIds: string[];
     sources: SpellSource[];
     castOptions: CastOption[];

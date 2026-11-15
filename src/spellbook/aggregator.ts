@@ -3,6 +3,7 @@ import { uniqueTags } from "./tags.ts";
 import type {
     ActorSnapshot,
     CastOption,
+    ConsumableSnapshot,
     EntrySnapshot,
     RankGroup,
     SourceKind,
@@ -38,6 +39,16 @@ export function aggregateSpells(actor: ActorSnapshot): SpellRow[] {
             }
             row.castOptions.push(...castOptionsFor(actor, entry, spell));
         }
+    }
+
+    // Wands and scrolls join the row of the spell they hold, as sources of their own.
+    for (const item of actor.consumables) {
+        const row = getOrCreateRow(rows, item.spell);
+        row.sources.push({ entryId: item.id, entryName: item.name, kind: item.category, available: false });
+        if (!autoHeightens(item.spell)) {
+            fixedRanks.set(row.key, [...(fixedRanks.get(row.key) ?? []), item.spell.baseRank]);
+        }
+        row.castOptions.push(...consumableOptions(item));
     }
 
     const result = [...rows.values()];
@@ -174,6 +185,32 @@ function signatureOptions(entry: EntrySnapshot, spell: SpellSnapshot, base: Opti
         if ((entry.slots[rank]?.max ?? 0) > 0) options.push(slotOption(entry, rank, base));
     }
     return options;
+}
+
+/** A wand casts its spell once a day; a scroll casts it once and is used up. Both cast at the item's rank. */
+function consumableOptions(item: ConsumableSnapshot): CastOption[] {
+    const base = { entryId: item.id, entryName: item.name, spellId: item.id, rank: item.spell.rank } as const;
+    if (item.category === "scroll") {
+        const option: CastOption = {
+            ...base,
+            kind: "scroll",
+            available: item.castable,
+            cost: { type: "scroll", quantity: item.quantity },
+        };
+        return [withReason(option, "cannot-cast")];
+    }
+    const reason: UnavailableReason | undefined = !item.castable
+        ? "cannot-cast"
+        : item.uses.value > 0
+          ? undefined
+          : "no-uses";
+    const option: CastOption = {
+        ...base,
+        kind: "wand",
+        available: !reason,
+        cost: { type: "wand", ...item.uses },
+    };
+    return [reason ? { ...option, reason } : option];
 }
 
 /** Casting from a spontaneous (or flexible) caster's shared slots at a rank */

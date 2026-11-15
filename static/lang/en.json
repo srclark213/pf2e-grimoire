@@ -42,13 +42,20 @@
             "PreparedSlot": "Prepared rank {rank} slot",
             "Slot": "Rank {rank} slot ({value} of {max} left)",
             "Innate": "Innate ({value} of {max} uses left)",
-            "Focus": "1 focus point ({value} left)"
+            "Focus": "1 focus point ({value} left)",
+            "Wand": "Daily use ({value} of {max} left)",
+            "Scroll": "Uses up the scroll ({quantity} carried)"
+        },
+        "Badge": {
+            "wand": "Wand",
+            "scroll": "Scroll"
         },
         "Reason": {
             "expended": "This slot is already used",
             "no-slots": "No rank {rank} slots left",
             "no-uses": "No uses left today",
-            "no-focus": "No focus points left"
+            "no-focus": "No focus points left",
+            "cannot-cast": "Not on any of your spell lists"
         },
         "Priority": {
             "Open": "Casting priority",

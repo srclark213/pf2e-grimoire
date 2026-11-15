@@ -47,20 +47,26 @@
         return game.i18n.localize(key, { rank: option.rank, source: option.entryName });
     }
 
-    function kindLabel(kind: string): string {
-        return game.i18n.localize(`PF2EGrimoire.Kind.${kind}`);
+    /** Wand and scroll names are long ("Wand of Teleport (Rank 6)"), so their badge shows the kind. */
+    function isItem(kind: string): boolean {
+        return kind === "wand" || kind === "scroll";
+    }
+
+    function kindLabel(kind: string, badge = false): string {
+        return game.i18n.localize(`PF2EGrimoire.${badge ? "Badge" : "Kind"}.${kind}`);
     }
 </script>
 
 <li class="spell-row">
     <div class="main" class:unavailable={!row.available}>
-    <button type="button" class="spell-name" onclick={() => openSpell(row.spellIds[0] ?? "")}>
+    <button type="button" class="spell-name" onclick={() => openSpell(row.spellIds[0] ?? row.sources[0]?.entryId ?? "")}>
         <img src={row.img} alt="" />
         <span>{row.name}</span>
         {#each row.tags as tag (tag)}
             <span class="tag">#{tag}</span>
         {/each}
     </button>
+    {#if row.spellIds.length > 0}
     <button
         type="button"
         class="tag-toggle"
@@ -71,6 +77,7 @@
     >
         <i class="fa-solid fa-tag"></i>
     </button>
+    {/if}
     <div class="ranks">
         {#each buttons as button (button.rank)}
             <button
@@ -98,7 +105,7 @@
                 data-kind={source.kind}
                 data-tooltip={`${source.entryName} (${kindLabel(source.kind)})`}
             >
-                {badgeLabel(source.entryName)}
+                {isItem(source.kind) ? kindLabel(source.kind, true) : badgeLabel(source.entryName)}
             </li>
         {/each}
     </ul>
@@ -300,5 +307,11 @@
     }
     .badge[data-kind="focus"] {
         --badge: #c7892b;
+    }
+    .badge[data-kind="wand"] {
+        --badge: #b5523b;
+    }
+    .badge[data-kind="scroll"] {
+        --badge: #a08a4c;
     }
 </style>

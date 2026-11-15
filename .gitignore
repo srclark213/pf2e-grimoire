@@ -5,3 +5,4 @@ foundry.config.json
 .vite/
 coverage/
 planning/.obsidian/workspace*.json
+.claude/settings.local.json

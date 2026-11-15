@@ -3,7 +3,14 @@ import type { SpellPF2e } from "@item";
 import { MODULE_ID } from "../constants.ts";
 import { extractFacets, type SpellSystemSource } from "../spellbook/facets.ts";
 import { readTags } from "../spellbook/tags.ts";
-import type { ActorSnapshot, EntryCategory, EntrySnapshot, SlotRankSnapshot, SpellSnapshot } from "../spellbook/model.ts";
+import type {
+    ActorSnapshot,
+    ConsumableSnapshot,
+    EntryCategory,
+    EntrySnapshot,
+    SlotRankSnapshot,
+    SpellSnapshot,
+} from "../spellbook/model.ts";
 
 const CATEGORIES: readonly EntryCategory[] = ["prepared", "spontaneous", "innate", "focus"];
 
@@ -40,7 +47,30 @@ export function snapshotActor(actor: CharacterPF2e): ActorSnapshot {
         level: actor.level,
         focus: focus ? { value: focus.value, max: focus.max } : null,
         entries,
+        consumables: snapshotConsumables(actor),
     };
+}
+
+/** Identified wands and scrolls that hold a spell. Unidentified ones would give the spell away. */
+function snapshotConsumables(actor: CharacterPF2e): ConsumableSnapshot[] {
+    const trickMagicItem = actor.itemTypes.feat.some((feat) => feat.slug === "trick-magic-item");
+    const result: ConsumableSnapshot[] = [];
+    for (const item of actor.itemTypes.consumable) {
+        const category = item.category;
+        if (category !== "wand" && category !== "scroll") continue;
+        const spell = item.embeddedSpell;
+        if (!spell || !item.isIdentified) continue;
+        result.push({
+            id: item.id,
+            name: item.name,
+            category,
+            spell: snapshotSpell(spell),
+            uses: { value: item.uses.value, max: item.uses.max },
+            quantity: item.quantity,
+            castable: trickMagicItem || actor.spellcasting.canCastConsumable(item),
+        });
+    }
+    return result;
 }
 
 function snapshotSpell(spell: SpellPF2e): SpellSnapshot {

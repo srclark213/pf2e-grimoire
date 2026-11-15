@@ -50,6 +50,10 @@
                 return t("Cost.Innate", { value: cost.value, max: cost.max });
             case "focus":
                 return t("Cost.Focus", { value: cost.value });
+            case "wand":
+                return t("Cost.Wand", { value: cost.value, max: cost.max });
+            case "scroll":
+                return t("Cost.Scroll", { quantity: cost.quantity });
         }
     }
 </script>
