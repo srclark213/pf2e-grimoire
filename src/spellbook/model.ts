@@ -1,3 +1,4 @@
+import type { SpellCategory } from "./categories.ts";
 import type { SpellFacets } from "./facets.ts";
 
 /**
@@ -127,6 +128,8 @@ export interface SpellRow {
     isFocus: boolean;
     /** Filterable facts, from the first merged spell */
     facets: SpellFacets;
+    /** Automatic categories from the rule table */
+    categories: SpellCategory[];
     /** Spell item ids on the actor that this row merges */
     spellIds: string[];
     sources: SpellSource[];

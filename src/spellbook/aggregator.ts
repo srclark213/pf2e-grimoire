@@ -1,3 +1,4 @@
+import { categorize } from "./categories.ts";
 import type {
     ActorSnapshot,
     CastOption,
@@ -78,6 +79,7 @@ function getOrCreateRow(rows: Map<string, SpellRow>, spell: SpellSnapshot): Spel
         isCantrip: spell.isCantrip,
         isFocus: spell.isFocus,
         facets: spell.facets,
+        categories: categorize(spell.facets),
         spellIds: [],
         sources: [],
         castOptions: [],

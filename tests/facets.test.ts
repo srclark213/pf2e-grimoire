@@ -79,6 +79,7 @@ describe("extractFacets edge cases", () => {
             rangeFeet: null,
             area: null,
             conditions: [],
+            effects: [],
         });
     });
 });

@@ -44,7 +44,23 @@ export interface SpellFacets {
     area: { type: string; size: number } | null;
     /** Conditions the description links to, as slugs ("frightened", "off-guard") */
     conditions: string[];
+    /** Effects spotted in the description text, for the category rules */
+    effects: SpellEffect[];
 }
+
+/**
+ * Effects recognized from description wording. pf2e has no structured data for these,
+ * so they are best-effort matches on the rules text.
+ */
+export type SpellEffect = "protection" | "movement";
+
+const EFFECT_PATTERNS: Record<SpellEffect, RegExp> = {
+    // "+1 circumstance bonus to AC", "bonus to saving throws", "10 temporary Hit Points", "resistance 5", "ward"
+    protection:
+        /bonus to (?:your |its |their )?(?:AC|Armor Class|saving throws|saves)|temporary Hit Points|\bresistance (?:\d|equal|to)|\bwards?\b/i,
+    // "a fly Speed", "climb Speed", "teleport", "transport yourself"
+    movement: /\b(?:fly|climb|swim|burrow) Speed\b|\bteleport|\btransports? (?:yourself|you|the target)\b/i,
+};
 
 const SAVES = new Set(["fortitude", "reflex", "will"]);
 
@@ -68,6 +84,10 @@ export function extractFacets(system: SpellSystemSource): SpellFacets {
         }
     }
 
+    const description = system.description?.value ?? "";
+    const text = description.replace(/<[^>]+>/g, " ");
+    const effects = (Object.keys(EFFECT_PATTERNS) as SpellEffect[]).filter((e) => EFFECT_PATTERNS[e].test(text));
+
     const rangeText = system.range?.value?.trim() || null;
     const feet = rangeText?.match(/^(\d+)\s*(?:feet|foot|ft)/i);
 
@@ -87,7 +107,8 @@ export function extractFacets(system: SpellSystemSource): SpellFacets {
         range: rangeText,
         rangeFeet: feet ? Number(feet[1]) : null,
         area,
-        conditions: linkedConditions(system.description?.value ?? ""),
+        conditions: linkedConditions(description),
+        effects,
     };
 }
 
