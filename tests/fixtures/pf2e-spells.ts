@@ -9,3 +9,13 @@ export function pf2eSpell(path: string): SpellSystemSource & { level: { value: n
     const source = JSON.parse(readFileSync(`${SPELLS}${path}.json`, "utf8")) as { system: never };
     return source.system;
 }
+
+const EQUIPMENT = fileURLToPath(new URL("../../vendor/pf2e/packs/pf2e/equipment/", import.meta.url));
+
+/** Loads an equipment item's description HTML from the pinned pf2e submodule, e.g. "staff-of-fire". */
+export function pf2eDescription(slug: string): string {
+    const source = JSON.parse(readFileSync(`${EQUIPMENT}${slug}.json`, "utf8")) as {
+        system: { description: { value: string } };
+    };
+    return source.system.description.value;
+}
