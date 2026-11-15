@@ -49,6 +49,23 @@
             "no-slots": "No rank {rank} slots left",
             "no-uses": "No uses left today",
             "no-focus": "No focus points left"
+        },
+        "Priority": {
+            "Open": "Casting priority",
+            "Title": "Casting priority",
+            "Close": "Close",
+            "Hint": "When more than one source can cast a spell at a rank, a click uses the highest one here. Wand overcharge and staff + slot are never picked automatically.",
+            "MoveUp": "Move up",
+            "MoveDown": "Move down",
+            "Reset": "Reset to default",
+            "Group": {
+                "slot": "Spell slots",
+                "focus": "Focus points",
+                "innate": "Innate spells",
+                "staff": "Staves",
+                "wand": "Wands",
+                "scroll": "Scrolls"
+            }
         }
     }
 }

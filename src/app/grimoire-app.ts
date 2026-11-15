@@ -7,6 +7,8 @@ import { snapshotActor } from "../foundry/snapshot.ts";
 import { aggregateSpells, groupByRank } from "../spellbook/aggregator.ts";
 import { cantripRank } from "../spellbook/labels.ts";
 import type { CastOption } from "../spellbook/model.ts";
+import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
+import { normalizePriority } from "../spellbook/priority.ts";
 import Grimoire from "./Grimoire.svelte";
 import { GrimoireState } from "./grimoire-state.svelte.ts";
 
@@ -70,6 +72,7 @@ export class GrimoireApp extends ApplicationV2 {
                     grimoire: this.#state,
                     openSpell: (spellId: string) => this.#openSpell(spellId),
                     cast: (option: CastOption) => castOption(this.actor, option),
+                    savePriority: (priority: PriorityGroup[] | null) => this.#savePriority(priority),
                 },
             });
             flushSync();
@@ -109,6 +112,15 @@ export class GrimoireApp extends ApplicationV2 {
         void this.actor.items.get(spellId)?.sheet.render(true);
     }
 
+    /** Saves the character's source priority in its flags; null resets it to the default. */
+    async #savePriority(priority: PriorityGroup[] | null): Promise<void> {
+        if (priority) {
+            await this.actor.setFlag(MODULE_ID, "priority", priority);
+        } else {
+            await this.actor.unsetFlag(MODULE_ID, "priority");
+        }
+    }
+
     /** Re-reads the actor and replaces the window's state. */
     #refresh(): void {
         const snapshot = snapshotActor(this.actor);
@@ -116,6 +128,7 @@ export class GrimoireApp extends ApplicationV2 {
         this.#state.entryCount = snapshot.entries.length;
         this.#state.cantripRank = cantripRank(snapshot.level);
         this.#state.focus = snapshot.focus?.max ? snapshot.focus : null;
+        this.#state.priority = normalizePriority(this.actor.getFlag(MODULE_ID, "priority"));
         this.#state.groups = groupByRank(aggregateSpells(snapshot));
     }
 }

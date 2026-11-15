@@ -1,16 +1,22 @@
 <script lang="ts">
     import type { CastOption, RankGroup } from "../spellbook/model.ts";
     import type { GrimoireState } from "./grimoire-state.svelte.ts";
+    import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import type { RankButton } from "../spellbook/rank-buttons.ts";
+    import PrioritySettings from "./PrioritySettings.svelte";
     import SourceMenu from "./SourceMenu.svelte";
     import SpellRowView from "./SpellRowView.svelte";
 
-    const {
-        grimoire,
-        openSpell,
-        cast,
-    }: { grimoire: GrimoireState; openSpell: (spellId: string) => void; cast: (option: CastOption) => Promise<void> } =
-        $props();
+    interface Props {
+        grimoire: GrimoireState;
+        openSpell: (spellId: string) => void;
+        cast: (option: CastOption) => Promise<void>;
+        savePriority: (priority: PriorityGroup[] | null) => Promise<void>;
+    }
+
+    const { grimoire, openSpell, cast, savePriority }: Props = $props();
+
+    let showSettings = $state(false);
 
     let root: HTMLElement | undefined = $state();
     let menu: { x: number; y: number; button: RankButton } | null = $state(null);
@@ -58,7 +64,21 @@
                 {/each}
             </span>
         {/if}
+        <button
+            type="button"
+            class="settings-toggle"
+            class:active={showSettings}
+            aria-label={game.i18n.localize("PF2EGrimoire.Priority.Open")}
+            data-tooltip={game.i18n.localize("PF2EGrimoire.Priority.Open")}
+            onclick={() => (showSettings = !showSettings)}
+        >
+            <i class="fa-solid fa-sliders"></i>
+        </button>
     </header>
+
+    {#if showSettings}
+        <PrioritySettings priority={grimoire.priority} save={savePriority} close={() => (showSettings = false)} />
+    {/if}
 
     <div class="groups">
         {#each grimoire.groups as group (group.rank)}
@@ -69,7 +89,7 @@
                 </h3>
                 <ul>
                     {#each group.rows as row (row.key)}
-                        <SpellRowView {row} {openSpell} {cast} {openMenu} />
+                        <SpellRowView {row} priority={grimoire.priority} {openSpell} {cast} {openMenu} />
                     {/each}
                 </ul>
             </section>
@@ -108,6 +128,7 @@
         border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
     }
     .summary {
+        flex: 1;
         opacity: 0.75;
         font-size: 0.85rem;
     }
@@ -116,6 +137,22 @@
         gap: 0.2rem;
         color: #c7892b;
         font-size: 0.8rem;
+    }
+    .settings-toggle {
+        all: unset;
+        width: 1.6rem;
+        height: 1.6rem;
+        border-radius: 4px;
+        text-align: center;
+        line-height: 1.6rem;
+        cursor: pointer;
+        opacity: 0.75;
+    }
+    .settings-toggle:hover,
+    .settings-toggle:focus-visible,
+    .settings-toggle.active {
+        opacity: 1;
+        background: color-mix(in srgb, currentColor 15%, transparent);
     }
     .groups {
         flex: 1;

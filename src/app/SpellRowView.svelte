@@ -1,18 +1,20 @@
 <script lang="ts">
     import { badgeLabel } from "../spellbook/labels.ts";
     import type { CastOption, SpellRow } from "../spellbook/model.ts";
+    import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import { rankButtons, type RankButton } from "../spellbook/rank-buttons.ts";
 
     interface Props {
         row: SpellRow;
+        priority: PriorityGroup[];
         openSpell: (spellId: string) => void;
         cast: (option: CastOption) => Promise<void>;
         openMenu: (event: MouseEvent, button: RankButton) => void;
     }
 
-    const { row, openSpell, cast, openMenu }: Props = $props();
+    const { row, priority, openSpell, cast, openMenu }: Props = $props();
 
-    const buttons = $derived(rankButtons(row));
+    const buttons = $derived(rankButtons(row, priority));
     let casting = $state(false);
 
     async function onCast(option: CastOption): Promise<void> {
