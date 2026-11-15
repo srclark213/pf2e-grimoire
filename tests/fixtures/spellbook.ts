@@ -58,7 +58,16 @@ export function entry(
 }
 
 export function actor(entries: EntrySnapshot[], overrides: Partial<ActorSnapshot> = {}): ActorSnapshot {
-    return { level: 5, focus: null, entries, consumables: [], ...overrides };
+    return {
+        id: "actor-1",
+        level: 5,
+        highestSlotRank: 3,
+        focus: null,
+        entries,
+        consumables: [],
+        staves: [],
+        ...overrides,
+    };
 }
 
 /** A wand or scroll holding `held`, cast at `held.rank`. Wands default to an unused daily use. */

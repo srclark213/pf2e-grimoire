@@ -3,6 +3,7 @@ import type { ItemPF2e } from "@item";
 import { flushSync, mount, unmount } from "svelte";
 import { MODULE_ID } from "../constants.ts";
 import { castOption } from "../foundry/cast.ts";
+import { prepareStaffFor } from "../foundry/staves.ts";
 import { repairWand } from "../foundry/wands.ts";
 import { loadCollapsed, loadFilter, saveCollapsed, saveFilter } from "../foundry/filter-store.ts";
 import type { ChipGroup, FilterState } from "../spellbook/filter.ts";
@@ -83,6 +84,7 @@ export class GrimoireApp extends ApplicationV2 {
                     setCollapsed: (collapsed: ChipGroup[]) => this.#setCollapsed(collapsed),
                     setTags: (spellIds: string[], tags: string[]) => this.#setTags(spellIds, tags),
                     repairWand: (wandId: string) => repairWand(this.actor, wandId),
+                    prepareStaff: (staffId: string) => prepareStaffFor(this.actor, staffId),
                 },
             });
             flushSync();
@@ -159,6 +161,7 @@ export class GrimoireApp extends ApplicationV2 {
         this.#state.entryCount = snapshot.entries.length;
         this.#state.cantripRank = cantripRank(snapshot.level);
         this.#state.focus = snapshot.focus?.max ? snapshot.focus : null;
+        this.#state.staves = snapshot.staves;
         this.#state.priority = normalizePriority(this.actor.getFlag(MODULE_ID, "priority"));
         this.#state.groups = groupByRank(aggregateSpells(snapshot));
     }

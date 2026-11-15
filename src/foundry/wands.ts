@@ -1,6 +1,7 @@
 import type { CharacterPF2e } from "@actor";
 import type { ConsumablePF2e } from "@item";
 import { MODULE_ID } from "../constants.ts";
+import { prepareStavesOnRest } from "./staves.ts";
 import {
     OVERCHARGE_DC,
     canOvercharge,
@@ -77,8 +78,10 @@ export async function repairWand(actor: CharacterPF2e, wandId: string): Promise<
 }
 
 /**
- * pf2e's Rest for the Night refills wand uses itself (GRIM-16). This clears the Grimoire's
- * overcharged-today mark so tomorrow's overcharge is a normal one. Broken wands stay broken.
+ * On pf2e's Rest for the Night:
+ * - wands: pf2e refills their uses itself (GRIM-16). This clears the Grimoire's overcharged-today mark so
+ *   tomorrow's overcharge is a normal one. Broken wands stay broken.
+ * - staves: the character's staff is prepared for the new day (GRIM-22).
  */
 export function registerRestHook(): void {
     Hooks.on("pf2e.restForTheNight", (...args: unknown[]) => {
@@ -88,5 +91,6 @@ export function registerRestHook(): void {
             .filter((item) => item.category === "wand" && readWandState(item.flags[MODULE_ID]).overchargedToday)
             .map((item) => ({ _id: item.id, [`flags.${MODULE_ID}.overchargedOn`]: null }));
         if (updates.length > 0) void actor.updateEmbeddedDocuments("Item", updates);
+        void prepareStavesOnRest(actor);
     });
 }

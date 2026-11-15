@@ -8,6 +8,7 @@
     import PrioritySettings from "./PrioritySettings.svelte";
     import SourceMenu from "./SourceMenu.svelte";
     import SpellRowView from "./SpellRowView.svelte";
+    import StaffBar from "./StaffBar.svelte";
 
     interface Props {
         grimoire: GrimoireState;
@@ -18,9 +19,10 @@
         setCollapsed: (collapsed: ChipGroup[]) => void;
         setTags: (spellIds: string[], tags: string[]) => Promise<void>;
         repairWand: (wandId: string) => Promise<void>;
+        prepareStaff: (staffId: string) => Promise<void>;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
@@ -89,6 +91,10 @@
 
     {#if showSettings}
         <PrioritySettings priority={grimoire.priority} save={savePriority} close={() => (showSettings = false)} />
+    {/if}
+
+    {#if grimoire.staves.length > 0}
+        <StaffBar staves={grimoire.staves} prepare={prepareStaff} />
     {/if}
 
     {#if allRows.length > 0}

@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { isEmptyStaffList, parseStaffSpells, staffEntries, type StaffSpellList } from "../src/spellbook/staff.ts";
+import {
+    addCharges,
+    isEmptyStaffList,
+    parseStaffSpells,
+    prepareStaff,
+    readStaffData,
+    restPreparation,
+    spendCharges,
+    staffCost,
+    staffEntries,
+    unprepareStaff,
+    type StaffSpellList,
+} from "../src/spellbook/staff.ts";
 import { pf2eDescription } from "./fixtures/pf2e-spells.ts";
 
 /** rank → spell names, which is what matters when reading a test */
@@ -71,5 +83,47 @@ describe("staff description parser (world data)", () => {
             "2:Breathe Fire",
             "2:Floating Flame",
         ]);
+    });
+});
+
+describe("staff data and charges", () => {
+    const html = pf2eDescription("staff-of-fire-greater");
+
+    it("reads empty flags as an unprepared staff with spells from the description", () => {
+        const data = readStaffData(undefined, html);
+        expect(data).toMatchObject({ manual: false, charges: { value: 0, max: 0 }, preparedBy: null });
+        expect(staffEntries(data.spells)).toHaveLength(6);
+    });
+
+    it("keeps a hand-edited list instead of re-reading the description", () => {
+        const spells = { 1: [{ uuid: "Compendium.x.Item.a", name: "Custom" }] };
+        const data = readStaffData({ manual: true, spells }, html);
+        expect(data.spells).toEqual(spells);
+    });
+
+    it("sets charges to the highest slot rank on prepare, replacing what was left", () => {
+        const used = { ...readStaffData(undefined, html), charges: { value: 2, max: 6 } };
+        expect(prepareStaff(used, "actor1", 7, 100)).toMatchObject({
+            charges: { value: 7, max: 7 },
+            preparedBy: "actor1",
+            preparedOn: 100,
+        });
+    });
+
+    it("costs a spell's rank in charges, cantrips nothing, and never goes below zero", () => {
+        const data = prepareStaff(readStaffData(undefined, html), "a", 3, 0);
+        expect(staffCost(0)).toBe(0);
+        expect(staffCost(2)).toBe(2);
+        expect(spendCharges(data, 2).charges).toEqual({ value: 1, max: 3 });
+        expect(spendCharges(data, 5).charges.value).toBe(0);
+        expect(addCharges(data, 2).charges).toEqual({ value: 5, max: 5 });
+        expect(unprepareStaff(data)).toMatchObject({ charges: { value: 0, max: 0 }, preparedBy: null });
+    });
+
+    it("prepares the only staff on rest, asks with several, and skips characters without slots", () => {
+        expect(restPreparation(["s1"], 6)).toEqual({ type: "auto", staffId: "s1" });
+        expect(restPreparation(["s1", "s2"], 6)).toEqual({ type: "ask", staffIds: ["s1", "s2"] });
+        expect(restPreparation([], 6)).toEqual({ type: "none" });
+        expect(restPreparation(["s1"], 0)).toEqual({ type: "none" });
     });
 });

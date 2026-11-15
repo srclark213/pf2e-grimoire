@@ -97,13 +97,32 @@ export interface ConsumableSnapshot {
     overchargedToday: boolean;
 }
 
+/** A staff the character carries */
+export interface StaffSnapshot {
+    /** The staff (weapon) item's id */
+    id: string;
+    name: string;
+    held: boolean;
+    /** This character prepared it since their last rest */
+    preparedByMe: boolean;
+    /** Someone else prepared it, so this character can't cast from it today */
+    preparedByOther: boolean;
+    charges: UsesSnapshot;
+}
+
 export interface ActorSnapshot {
+    /** The actor's id, used to tell who prepared a staff */
+    id: string;
     level: number;
+    /** The highest spell slot rank across prepared and spontaneous entries: a staff's daily charges */
+    highestSlotRank: number;
     /** The focus pool, or null if the actor has none */
     focus: UsesSnapshot | null;
     entries: EntrySnapshot[];
     /** Identified wands and scrolls that hold a spell */
     consumables: ConsumableSnapshot[];
+    /** Staves the character carries (not dropped) */
+    staves: StaffSnapshot[];
 }
 
 /** What casting through an option spends, with what is left of it */

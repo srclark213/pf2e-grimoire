@@ -2,6 +2,7 @@ import type { CharacterPF2e } from "@actor";
 import type { SpellPF2e } from "@item";
 import { MODULE_ID } from "../constants.ts";
 import { readWandState } from "../spellbook/overcharge.ts";
+import { highestSlotRank, snapshotStaves } from "./staves.ts";
 import { extractFacets, type SpellSystemSource } from "../spellbook/facets.ts";
 import { readTags } from "../spellbook/tags.ts";
 import type {
@@ -45,10 +46,13 @@ export function snapshotActor(actor: CharacterPF2e): ActorSnapshot {
 
     const focus = actor.system.resources.focus;
     return {
+        id: actor.id,
         level: actor.level,
+        highestSlotRank: highestSlotRank(actor),
         focus: focus ? { value: focus.value, max: focus.max } : null,
         entries,
         consumables: snapshotConsumables(actor),
+        staves: snapshotStaves(actor),
     };
 }
 

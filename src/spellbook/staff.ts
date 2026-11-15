@@ -69,3 +69,102 @@ export function staffEntries(list: StaffSpellList): { rank: number; spell: Staff
         .sort((a, b) => a - b)
         .flatMap((rank) => (list[rank] ?? []).map((spell) => ({ rank, spell })));
 }
+
+/**
+ * What the Grimoire keeps on a staff item, under `flags["pf2e-grimoire"].staff`.
+ * Staff rules (GM Core p. 289, see PF2e Rules Notes): preparing sets charges to the preparer's highest spell
+ * slot rank, replacing any left; one staff per person per day and one preparer per staff; a spell costs
+ * charges equal to its rank, a cantrip costs none.
+ */
+export interface StaffData {
+    spells: StaffSpellList;
+    /** The player edited the list, so the description is no longer re-read */
+    manual: boolean;
+    charges: { value: number; max: number };
+    /** Actor id of today's preparer, or null if nobody prepared it since their last rest */
+    preparedBy: string | null;
+    /** World time of the last preparation */
+    preparedOn: number | null;
+}
+
+export const EMPTY_CHARGES = { value: 0, max: 0 } as const;
+
+function toCount(value: unknown): number {
+    return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
+function readSpellList(value: unknown): StaffSpellList {
+    const list: StaffSpellList = {};
+    if (!value || typeof value !== "object") return list;
+    for (const [key, spells] of Object.entries(value)) {
+        const rank = Number(key);
+        if (!Number.isInteger(rank) || rank < 0 || rank > 10 || !Array.isArray(spells)) continue;
+        const refs = spells.filter(
+            (s): s is StaffSpellRef => typeof s?.uuid === "string" && typeof s?.name === "string",
+        );
+        if (refs.length > 0) list[rank] = refs.map(({ uuid, name }) => ({ uuid, name }));
+    }
+    return list;
+}
+
+/**
+ * Reads a staff's Grimoire data. Unless the player edited the list by hand, the spells come from the
+ * description every time, so a corrected description is picked up without any action.
+ */
+export function readStaffData(flag: unknown, descriptionHtml: string): StaffData {
+    const raw = (flag && typeof flag === "object" ? flag : {}) as Record<string, unknown>;
+    const manual = raw["manual"] === true;
+    const charges = (raw["charges"] ?? {}) as Record<string, unknown>;
+    return {
+        spells: manual ? readSpellList(raw["spells"]) : parseStaffSpells(descriptionHtml),
+        manual,
+        charges: { value: toCount(charges["value"]), max: toCount(charges["max"]) },
+        preparedBy: typeof raw["preparedBy"] === "string" ? raw["preparedBy"] : null,
+        preparedOn: typeof raw["preparedOn"] === "number" ? raw["preparedOn"] : null,
+    };
+}
+
+/** Preparing a staff: charges equal the preparer's highest slot rank, replacing whatever was left. */
+export function prepareStaff(data: StaffData, actorId: string, highestSlotRank: number, now: number): StaffData {
+    return {
+        ...data,
+        charges: { value: highestSlotRank, max: highestSlotRank },
+        preparedBy: actorId,
+        preparedOn: now,
+    };
+}
+
+/** A staff someone else prepared, or this character prepared on an earlier day, loses its charges. */
+export function unprepareStaff(data: StaffData): StaffData {
+    return { ...data, charges: { ...EMPTY_CHARGES }, preparedBy: null, preparedOn: null };
+}
+
+/** Charges a staff spell costs: its rank, or nothing for a cantrip */
+export function staffCost(rank: number): number {
+    return Math.max(0, rank);
+}
+
+/** Spends charges, never below zero */
+export function spendCharges(data: StaffData, amount: number): StaffData {
+    return { ...data, charges: { ...data.charges, value: Math.max(0, data.charges.value - amount) } };
+}
+
+/** Adds charges (the prepared caster's slot boost raises the maximum too) */
+export function addCharges(data: StaffData, amount: number): StaffData {
+    return {
+        ...data,
+        charges: { value: data.charges.value + amount, max: data.charges.max + amount },
+    };
+}
+
+/**
+ * Which staves Rest for the Night prepares: none if the character has no spell slots, the only one if
+ * exactly one is carried, otherwise the player is asked.
+ */
+export type RestPreparation = { type: "none" } | { type: "auto"; staffId: string } | { type: "ask"; staffIds: string[] };
+
+export function restPreparation(staffIds: readonly string[], highestSlotRank: number): RestPreparation {
+    if (highestSlotRank <= 0 || staffIds.length === 0) return { type: "none" };
+    if (staffIds.length === 1) return { type: "auto", staffId: staffIds[0]! };
+    return { type: "ask", staffIds: [...staffIds] };
+}
