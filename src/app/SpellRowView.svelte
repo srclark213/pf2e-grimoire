@@ -3,7 +3,7 @@
     import type { CastOption, SpellRow } from "../spellbook/model.ts";
     import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import { rankButtons, type RankButton } from "../spellbook/rank-buttons.ts";
-    import { actionGlyph, rankLabel, type ColumnState } from "../spellbook/table.ts";
+    import { actionGlyph, castsLeft, rankLabel, type ColumnState } from "../spellbook/table.ts";
     import { addTag, removeTag } from "../spellbook/tags.ts";
 
     interface Props {
@@ -43,6 +43,7 @@
     const isLong = $derived(row.facets.actions.includes("long"));
     const save = $derived(row.facets.defense ? t(`Defense.Short.${row.facets.defense}`) : "");
     const label = $derived(rankLabel(row));
+    const left = $derived(castsLeft(row));
 
     let casting = $state(false);
 
@@ -72,6 +73,9 @@
 <div class="spell-row" class:unavailable={!row.available} role="row">
     {#if columns.rank}
         <span class="cell base-rank" role="cell">{label}</span>
+    {/if}
+    {#if columns.casts}
+        <span class="cell casts" class:none={left === 0} role="cell">{left === null ? "∞" : left}</span>
     {/if}
     <span class="cell name-cell" role="cell">
         <button
@@ -193,6 +197,15 @@
     .unavailable .base-rank,
     .unavailable .save {
         opacity: 0.45;
+    }
+    .casts {
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-align: center;
+    }
+    .casts.none {
+        opacity: 0.35;
+        font-weight: normal;
     }
     .base-rank,
     .save {

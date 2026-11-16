@@ -156,6 +156,14 @@
             <label>
                 <input
                     type="checkbox"
+                    checked={columns.casts}
+                    onchange={(event) => setColumn("casts", event.currentTarget.checked)}
+                />
+                {t("Table.ShowCasts")}
+            </label>
+            <label>
+                <input
+                    type="checkbox"
                     checked={columns.from}
                     onchange={(event) => setColumn("from", event.currentTarget.checked)}
                 />

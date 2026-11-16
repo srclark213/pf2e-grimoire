@@ -215,7 +215,10 @@
             "From": "From",
             "Columns": "Columns",
             "ShowRank": "Base rank",
-            "ShowFrom": "From (sources)"
+            "ShowFrom": "From (sources)",
+            "Casts": "Left",
+            "CastsHint": "Casts left today, across every source (∞: cantrips and other free casts; wand overcharge not counted)",
+            "ShowCasts": "Casts left today"
         },
         "CastShort": "Cast · {rank}"
     }
