@@ -219,6 +219,127 @@
             "NoSave": "No save or attack"
         },
         "CastShort": "Cast · {rank}",
-        "CastsLeft": "{left} of {max} left at this rank."
+        "CastsLeft": "{left} of {max} left at this rank.",
+        "Kinetic": {
+            "WindowTitle": "Kinetic Gate: {actor}",
+            "SheetButton": "Kinetic Gate",
+            "Warning": {
+                "EndsAura": "Overflow: your kinetic aura deactivates after this.",
+                "EndsStances": "Also ends {names}.",
+                "ReplacesStance": "Replaces {names}.",
+                "WastesInfusion": "Wastes {infusion}, which needs an Elemental Blast."
+            },
+            "Keybinding": {
+                "Name": "Open Kinetic Gate",
+                "Hint": "Opens the kineticist dashboard for your controlled token's character, or your assigned character."
+            },
+            "Setting": {
+                "Automation": {
+                    "Name": "Kineticist automation",
+                    "Hint": "Follow kineticists' chat cards: an overflow impulse ends the kinetic aura and its stance, infusions are tracked until the impulse they modify, and players are warned when an infusion is wasted or a second overflow is used in a round."
+                }
+            },
+            "EffectApplied": "Applied {effect}.",
+            "Notice": {
+                "InfusionApplied": "{infusion} applies to {item}.",
+                "InfusionWasted": "{infusion} was wasted: {item} isn't what it modifies.",
+                "ChainContinues": "Chain Infusion: blast {blasts} of {max}. If it hit, blast another creature within range of the target.",
+                "ChainEnded": "Chain Infusion: the chain ends after {blasts} blasts. Roll damage once for every creature hit.",
+                "Overflow": "{item} overflows: your kinetic aura deactivates.",
+                "OverflowTwice": "{item} is a second overflow impulse this round. You can use only one per round.",
+                "ChannelRider": "{item} is part of your Channel Elements action.",
+                "AuraEnded": "Your kinetic aura is now dormant. Channel Elements to reactivate it.",
+                "AuraEndedWithStances": "Your kinetic aura is now dormant, and {stances} ended with it. Channel Elements to reactivate it."
+            },
+            "Aura": {
+                "Active": "Kinetic aura active · {radius} feet",
+                "Dormant": "Kinetic aura dormant",
+                "Dismiss": "Dismiss",
+                "DismissHint": "Deactivate your kinetic aura. Stance impulses end with it.",
+                "ChannelHint": "Activate your kinetic aura. As part of this action you can use a 1-action Elemental Blast or a 1-action stance impulse."
+            },
+            "Impulse": {
+                "Attack": "Impulse attack {modifier}",
+                "DC": "Class DC {dc}",
+                "Use": "Use",
+                "Details": "Details",
+                "FreeWithChannel": "Part of Channel Elements: no extra action",
+                "Infused": "The primed infusion applies to this"
+            },
+            "Junction": {
+                "Hint": "Gate junction",
+                "aura": "Aura junction",
+                "critical": "Critical blast junction",
+                "impulse": "Impulse junction",
+                "resistance": "Elemental resistance",
+                "skill": "Skill junction"
+            },
+            "Overflow": {
+                "Ready": "Overflow ready",
+                "Used": "Overflow used this round",
+                "ReadyHint": "You can use one overflow impulse this round.",
+                "UsedHint": "You've used an overflow impulse this round. You can use only one per round, even after you reactivate your aura.",
+                "Clear": "Forget this round's overflow"
+            },
+            "Banner": {
+                "Primed": "{name} primed",
+                "NextBlast": "Your next action must be an Elemental Blast, or the infusion is wasted.",
+                "NextImpulse": "Your next action must be an impulse, or the infusion is wasted.",
+                "Chain": "Chain Infusion: {blasts} of {max} blasts",
+                "ChainHint": "If the last blast hit, blast a different creature within range of it. Your MAP applies. Roll damage once.",
+                "Drop": "Drop the infusion",
+                "Channel": "Channel Elements",
+                "ChannelHint": "You can include a 1-action Elemental Blast or a 1-action stance impulse in this action."
+            },
+            "Effect": {
+                "StanceHint": "Stance impulse: ends when your kinetic aura deactivates",
+                "Remove": "Remove effect"
+            },
+            "Infusion": {
+                "Header": "Infusions",
+                "TargetBlast": "Modifies your next Elemental Blast",
+                "TargetImpulse": "Modifies your next impulse",
+                "ChainHint": "Next Elemental Blast chains, up to {max} blasts"
+            },
+            "Blast": {
+                "Header": "Elemental Blast",
+                "Cost": "Actions per blast",
+                "OneAction": "1-action blast",
+                "TwoActions": "2-action blast: adds your Constitution modifier as a status bonus to damage",
+                "Dormant": "Your kinetic aura is dormant. Channel Elements to blast.",
+                "ChannelFree": "A 1-action blast now is part of your Channel Elements action.",
+                "ChannelNeedsOne": "Only a 1-action blast can be part of Channel Elements.",
+                "SwitchToOne": "Switch to 1 action",
+                "ChainNext": "Chain Infusion: blast {next} of {max}",
+                "Infused": "{name} applies to your next blast",
+                "DamageType": "Damage type",
+                "Chain": "Chain",
+                "ChainAttack": "Chained blast {next} of {max} (ranged, {modifier})",
+                "Melee": "Melee",
+                "Ranged": "Ranged",
+                "Damage": "Roll damage",
+                "Critical": "Roll critical damage ({formula})",
+                "Crit": "Crit"
+            },
+            "Block": {
+                "AuraDormant": "Your kinetic aura is dormant: impulses need it active.",
+                "OverflowUsed": "You've already used an overflow impulse this round.",
+                "UseAnyway": "Use it anyway?"
+            },
+            "Section": {
+                "stance": "Stances",
+                "impulse": "Impulses",
+                "overflow": "Overflow",
+                "reaction": "Reactions and free actions",
+                "overflowHint": "One per round; ends your aura",
+                "stanceHint": "End when your aura does"
+            },
+            "Badge": {
+                "Composite": "Composite",
+                "CompositeHint": "Combines several of your elements",
+                "Overflow": "Overflow",
+                "OverflowHint": "Deactivates your kinetic aura. One overflow impulse per round."
+            }
+        }
     }
 }

@@ -1,6 +1,8 @@
 import type { ActorPF2e, CharacterPF2e } from "@actor";
 import type { ApplicationV1HeaderButton } from "@client/appv1/api/application-v1.d.mts";
 import { GrimoireApp } from "./app/grimoire-app.ts";
+import { KineticApp } from "./app/kinetic-app.ts";
+import { isKineticist } from "./foundry/kinetic-snapshot.ts";
 import { MODULE_ID } from "./constants.ts";
 
 function isCharacter(actor: Maybe<ActorPF2e>): actor is CharacterPF2e {
@@ -14,6 +16,15 @@ export function openGrimoire(actor: Maybe<ActorPF2e>): GrimoireApp | null {
         return null;
     }
     return GrimoireApp.open(actor);
+}
+
+/** Opens the Kinetic Gate dashboard for a kineticist. Exposed as `game.modules.get("pf2e-grimoire").api.openKinetic`. */
+export function openKinetic(actor: Maybe<ActorPF2e>): KineticApp | null {
+    if (!isKineticist(actor)) {
+        ui.notifications.warn(game.i18n.localize("PF2EGrimoire.Kinetic.Warning.NotKineticist"));
+        return null;
+    }
+    return KineticApp.open(actor);
 }
 
 /**
@@ -32,6 +43,14 @@ export function registerSheetButton(): void {
             icon: "fa-solid fa-book-sparkles",
             onclick: () => GrimoireApp.open(actor),
         });
+        if (isKineticist(actor)) {
+            buttons.unshift({
+                label: game.i18n.localize("PF2EGrimoire.Kinetic.SheetButton"),
+                class: `${MODULE_ID}-kinetic-open`,
+                icon: "fa-solid fa-wind",
+                onclick: () => KineticApp.open(actor),
+            });
+        }
     });
 }
 
@@ -50,6 +69,15 @@ export function registerKeybinding(): void {
         editable: [{ key: "KeyG", modifiers: ["Shift"] }],
         onDown: (): boolean => {
             openGrimoire(keybindingActor());
+            return true;
+        },
+    });
+    game.keybindings.register(MODULE_ID, "openKinetic", {
+        name: "PF2EGrimoire.Kinetic.Keybinding.Name",
+        hint: "PF2EGrimoire.Kinetic.Keybinding.Hint",
+        editable: [{ key: "KeyK", modifiers: ["Shift"] }],
+        onDown: (): boolean => {
+            openKinetic(keybindingActor());
             return true;
         },
     });

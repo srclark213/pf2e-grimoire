@@ -2,6 +2,14 @@
 
 A Foundry VTT v14 module for the Pathfinder 2e system (8.7.x). It adds a separate spellbook window that shows every spell from every spellcasting entry, staff, wand and scroll in one filterable list.
 
+Kineticists also get a **Kinetic Gate** dashboard (sheet header button, or Shift+K). It shows whether the kinetic aura is active, Elemental Blast attacks and damage, infusions and every impulse, grouped into stances, overflow and the rest. It follows the kineticist's chat cards, whether they come from the dashboard or the sheet:
+
+- An overflow impulse ends the aura and any stance impulse, and blocks a second overflow that round.
+- A primed infusion highlights what it modifies and warns when it would be wasted. Chain Infusion counts its blasts.
+- After Channel Elements, the dashboard shows which 1-action blast or stance can be part of it.
+
+A world setting, "Kineticist automation", turns the chat-card tracking off.
+
 ## Development
 
 You need Node 22 or later and git.
