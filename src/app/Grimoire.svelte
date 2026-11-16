@@ -27,9 +27,10 @@
         staffEditor: StaffEditorActions;
         setSort: (key: SortKey) => void;
         setColumn: (column: OptionalColumn, shown: boolean) => void;
+        toggleSection: (key: string) => void;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff, staffEditor, setSort, setColumn }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff, staffEditor, setSort, setColumn, toggleSection }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleRows = $derived(
@@ -134,6 +135,8 @@
                 {setSort}
                 cantripRank={grimoire.cantripRank}
                 toggleCantrips={() => setColumn("cantrips", !grimoire.view.columns.cantrips)}
+                collapsed={grimoire.view.collapsed}
+                {toggleSection}
                 {openSpell}
                 {cast}
                 {openMenu}

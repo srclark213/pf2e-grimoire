@@ -93,3 +93,98 @@ export function actionGlyph(actions: readonly ActionKey[]): string | null {
     if (actions.length === 1) return char(actions[0]!);
     return `${char(actions[0]!)} – ${char(actions.at(-1)!)}`;
 }
+
+/** A collapsible section of the table, following the sort: a base rank, a save, or a run of letters */
+export interface Section {
+    /** Stable id for remembering whether it's collapsed, e.g. "rank:3", "save:will", "name:A-C" */
+    key: string;
+    label: SectionLabel;
+    rows: SpellRow[];
+}
+
+export type SectionLabel =
+    | { kind: "rank"; rank: number }
+    | { kind: "save"; save: SpellDefense | null }
+    | { kind: "letters"; from: string; to: string };
+
+/** Letters per name section: grow a range until it holds this many spells... */
+const MIN_PER_LETTER_SECTION = 3;
+/** ...without going past this many, unless a single letter has more */
+const MAX_PER_LETTER_SECTION = 5;
+
+function initial(name: string): string {
+    const first = name.normalize("NFD").charAt(0).toUpperCase();
+    return /[A-Z]/.test(first) ? first : "#";
+}
+
+/**
+ * Splits already-sorted rows into sections for the current sort, keeping their order:
+ * - rank: one section per base rank
+ * - save: Fortitude, Reflex, Will, AC, then spells with no save
+ * - name: runs of consecutive initials holding about 3 to 5 spells ("A–C", "M"); a short last run joins
+ *   the one before it
+ */
+export function sectionRows(rows: readonly SpellRow[], sort: SortState): Section[] {
+    if (sort.key === "rank" || sort.key === "save") {
+        const sections: Section[] = [];
+        for (const row of rows) {
+            const id = sort.key === "rank" ? String(row.baseRank) : (row.facets.defense ?? "none");
+            const key = `${sort.key}:${id}`;
+            let section = sections.at(-1);
+            if (section?.key !== key) {
+                const label: SectionLabel =
+                    sort.key === "rank" ? { kind: "rank", rank: row.baseRank } : { kind: "save", save: row.facets.defense };
+                section = { key, label, rows: [] };
+                sections.push(section);
+            }
+            section.rows.push(row);
+        }
+        return sections;
+    }
+
+    // By name: group by initial, then merge neighbouring initials into ranges of a readable size.
+    const byInitial: { letter: string; rows: SpellRow[] }[] = [];
+    for (const row of rows) {
+        const letter = initial(row.name);
+        const last = byInitial.at(-1);
+        if (last?.letter === letter) last.rows.push(row);
+        else byInitial.push({ letter, rows: [row] });
+    }
+    const runs: { letters: string[]; rows: SpellRow[] }[] = [];
+    for (const group of byInitial) {
+        const current = runs.at(-1);
+        const fits =
+            current &&
+            current.rows.length < MIN_PER_LETTER_SECTION &&
+            current.rows.length + group.rows.length <= MAX_PER_LETTER_SECTION;
+        if (fits) {
+            current.letters.push(group.letter);
+            current.rows.push(...group.rows);
+        } else {
+            runs.push({ letters: [group.letter], rows: [...group.rows] });
+        }
+    }
+    const last = runs.at(-1);
+    const beforeLast = runs.at(-2);
+    if (last && beforeLast && last.rows.length < MIN_PER_LETTER_SECTION) {
+        beforeLast.letters.push(...last.letters);
+        beforeLast.rows.push(...last.rows);
+        runs.pop();
+    }
+    return runs.map((run) => {
+        const letters = [...run.letters].sort();
+        const from = letters[0]!;
+        const to = letters.at(-1)!;
+        const key = from === to ? `name:${from}` : `name:${from}-${to}`;
+        return { key, label: { kind: "letters", from, to }, rows: run.rows };
+    });
+}
+
+/** Collapsing or expanding one section */
+export function toggleSection(collapsed: readonly string[], key: string): string[] {
+    return collapsed.includes(key) ? collapsed.filter((k) => k !== key) : [...collapsed, key];
+}
+
+export function normalizeCollapsedSections(saved: unknown): string[] {
+    return Array.isArray(saved) ? saved.filter((k): k is string => typeof k === "string") : [];
+}

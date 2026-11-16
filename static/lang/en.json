@@ -215,7 +215,8 @@
             "From": "From",
             "Columns": "Columns",
             "ShowRank": "Base rank",
-            "ShowFrom": "From (sources)"
+            "ShowFrom": "From (sources)",
+            "NoSave": "No save or attack"
         },
         "CastShort": "Cast · {rank}",
         "CastsLeft": "{left} of {max} left at this rank."

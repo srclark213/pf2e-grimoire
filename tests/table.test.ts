@@ -9,8 +9,11 @@ import {
     normalizeColumns,
     normalizeSort,
     rankLabel,
+    normalizeCollapsedSections,
+    sectionRows,
     sortRows,
     splitRows,
+    toggleSection,
     toggleSort,
 } from "../src/spellbook/table.ts";
 import { actor, cantrip, entry, slots, spell } from "./fixtures/spellbook.ts";
@@ -113,5 +116,69 @@ describe("action glyphs", () => {
         expect(actionGlyph(["1", "2", "3"])).toBe("1 – 3");
         expect(actionGlyph(["long"])).toBeNull();
         expect(actionGlyph([])).toBeNull();
+    });
+});
+
+describe("sections", () => {
+    const named = (names: string[]) => names.map((n) => spell(n));
+    const nameRows = (names: string[]) =>
+        sortRows(
+            aggregateSpells(actor([entry("Spells", "spontaneous", named(names), { slots: slots({ 1: { value: 1, max: 1 } }) })])),
+            { key: "name", dir: 1 },
+        );
+    const summary = (sections: ReturnType<typeof sectionRows>) =>
+        sections.map((s) => `${s.key}=${s.rows.map((r) => r.name).join(",")}`);
+
+    it("makes one section per base rank when sorted by rank", () => {
+        const sorted = sortRows(splitRows(rows()).ranked, DEFAULT_SORT);
+        expect(summary(sectionRows(sorted, DEFAULT_SORT))).toEqual([
+            "rank:1=Fear",
+            "rank:3=Fireball,Slow",
+            "rank:6=Disintegrate",
+        ]);
+    });
+
+    it("makes save sections, with spells that have none last", () => {
+        const sort = { key: "save", dir: 1 } as const;
+        const sorted = sortRows(splitRows(rows()).ranked, sort);
+        expect(summary(sectionRows(sorted, sort))).toEqual([
+            "save:fortitude=Slow",
+            "save:reflex=Fireball",
+            "save:will=Fear",
+            "save:none=Disintegrate",
+        ]);
+        expect(sectionRows(sorted, sort)[3]!.label).toEqual({ kind: "save", save: null });
+    });
+
+    it("groups names into letter ranges of about 3 to 5 spells", () => {
+        const sections = sectionRows(
+            nameRows([
+                "Alarm", "Bane", "Bless", "Command", "Fear", "Fireball", "Fly", "Floating Flame", "Haste",
+                "Heal", "Heroism", "Slow", "Sunburst", "Teleport",
+            ]),
+            { key: "name", dir: 1 },
+        );
+        expect(sections.map((s) => [s.key, s.rows.length])).toEqual([
+            ["name:A-B", 3],
+            ["name:C-F", 5],
+            ["name:H", 3],
+            ["name:S-T", 3],
+        ]);
+        expect(sections[1]!.label).toEqual({ kind: "letters", from: "C", to: "F" });
+    });
+
+    it("keeps a big letter on its own and folds a short last run into the one before", () => {
+        const sections = sectionRows(
+            nameRows(["Heal", "Haste", "Heroism", "Harm", "Hydraulic Push", "Hideous Laughter", "Zap"]),
+            { key: "name", dir: 1 },
+        );
+        expect(sections.map((s) => [s.key, s.rows.length])).toEqual([["name:H-Z", 7]]);
+    });
+
+    it("toggles collapsed sections and reads saved ones defensively", () => {
+        expect(toggleSection([], "rank:3")).toEqual(["rank:3"]);
+        expect(toggleSection(["rank:3", "save:will"], "rank:3")).toEqual(["save:will"]);
+        expect(normalizeCollapsedSections(["rank:1", 4, null])).toEqual(["rank:1"]);
+        expect(normalizeCollapsedSections(undefined)).toEqual([]);
     });
 });

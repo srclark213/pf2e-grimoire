@@ -16,7 +16,7 @@ export class GrimoireState {
     /** Staves the character carries */
     staves: StaffSnapshot[] = $state.raw([]);
     /** The table's sort and hidden columns (this browser, every character) */
-    view: TableView = $state.raw({ sort: DEFAULT_SORT, columns: DEFAULT_COLUMNS });
+    view: TableView = $state.raw({ sort: DEFAULT_SORT, columns: DEFAULT_COLUMNS, collapsed: [] });
     /** Slots a prepared caster could expend into a staff today, and whether today's boost is used */
     boost: { slots: BoostSlot[]; used: boolean } = $state.raw({ slots: [], used: false });
     /** PF2e Staves entries still on the character, waiting to be imported */

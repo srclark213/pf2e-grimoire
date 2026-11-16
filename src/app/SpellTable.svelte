@@ -2,7 +2,15 @@
     import type { CastOption, SpellRow } from "../spellbook/model.ts";
     import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import type { RankButton } from "../spellbook/rank-buttons.ts";
-    import { gridRanks, splitRows, type ColumnState, type SortKey, type SortState } from "../spellbook/table.ts";
+    import {
+        gridRanks,
+        sectionRows,
+        splitRows,
+        type ColumnState,
+        type Section,
+        type SortKey,
+        type SortState,
+    } from "../spellbook/table.ts";
     import SpellRowView from "./SpellRowView.svelte";
 
     interface Props {
@@ -17,6 +25,9 @@
         /** The rank cantrips and focus spells heighten to */
         cantripRank: number;
         toggleCantrips: () => void;
+        /** Section keys the player collapsed */
+        collapsed: string[];
+        toggleSection: (key: string) => void;
         openSpell: (spellId: string) => void;
         cast: (option: CastOption) => Promise<void>;
         openMenu: (event: MouseEvent, button: RankButton) => void;
@@ -33,6 +44,8 @@
         setSort,
         cantripRank,
         toggleCantrips,
+        collapsed,
+        toggleSection,
         openSpell,
         cast,
         openMenu,
@@ -42,6 +55,19 @@
 
     const t = (key: string, data?: Record<string, unknown>) => game.i18n.localize(`PF2EGrimoire.${key}`, data);
     const groups = $derived(splitRows(rows));
+    const sections = $derived(sectionRows(groups.ranked, sort));
+
+    function sectionTitle(section: Section): string {
+        const label = section.label;
+        switch (label.kind) {
+            case "rank":
+                return t("Rank", { rank: label.rank });
+            case "save":
+                return label.save ? t(`Defense.${label.save}`) : t("Table.NoSave");
+            case "letters":
+                return label.from === label.to ? label.from : `${label.from}–${label.to}`;
+        }
+    }
     const hasFocus = $derived(groups.autoHeightened.some((r) => r.isFocus));
     const hasCantrips = $derived(groups.autoHeightened.some((r) => !r.isFocus));
     const groupTitle = $derived(
@@ -113,12 +139,24 @@
                 <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {cast} {openMenu} {setTags} {knownTags} />
             {/each}
         {/if}
-        {#if groups.ranked.length > 0}
-            <div class="group-divider" role="presentation"></div>
-        {/if}
     {/if}
-    {#each groups.ranked as row (row.key)}
-        <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {cast} {openMenu} {setTags} {knownTags} />
+    {#each sections as section (section.key)}
+        {@const open = !collapsed.includes(section.key)}
+        <button
+            type="button"
+            class="group-toggle section"
+            aria-expanded={open}
+            onclick={() => toggleSection(section.key)}
+        >
+            <i class={open ? "fa-solid fa-caret-down" : "fa-solid fa-caret-right"}></i>
+            <span class="group-title">{sectionTitle(section)}</span>
+            <span class="group-count">{section.rows.length}</span>
+        </button>
+        {#if open}
+            {#each section.rows as row (row.key)}
+                <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {cast} {openMenu} {setTags} {knownTags} />
+            {/each}
+        {/if}
     {/each}
 </div>
 
@@ -196,8 +234,10 @@
         font-size: 0.75rem;
         opacity: 0.6;
     }
-    .group-divider {
-        height: 0.4rem;
-        border-bottom: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+    .group-toggle.section {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+        background: color-mix(in srgb, currentColor 4%, transparent);
+        font-size: 0.78rem;
     }
 </style>

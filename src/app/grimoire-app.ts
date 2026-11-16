@@ -17,7 +17,7 @@ import { importLegacyStaves, legacyStaffEntries } from "../foundry/staves-import
 import { repairWand } from "../foundry/wands.ts";
 import { loadCollapsed, loadFilter, saveCollapsed, saveFilter } from "../foundry/filter-store.ts";
 import type { ChipGroup, FilterState } from "../spellbook/filter.ts";
-import { toggleSort, type OptionalColumn, type SortKey } from "../spellbook/table.ts";
+import { toggleSection, toggleSort, type OptionalColumn, type SortKey } from "../spellbook/table.ts";
 import { loadView, saveView, type TableView } from "../foundry/view-store.ts";
 import { snapshotActor } from "../foundry/snapshot.ts";
 import { aggregateSpells, groupByRank } from "../spellbook/aggregator.ts";
@@ -101,6 +101,8 @@ export class GrimoireApp extends ApplicationV2 {
                     importLegacyStaves: () => importLegacyStaves(this.actor),
                     boostStaff: (staffId: string) => boostStaff(this.actor, staffId, this.#state.boost.slots),
                     setSort: (key: SortKey) => this.#setView({ ...this.#state.view, sort: toggleSort(this.#state.view.sort, key) }),
+                    toggleSection: (key: string) =>
+                        this.#setView({ ...this.#state.view, collapsed: toggleSection(this.#state.view.collapsed, key) }),
                     setColumn: (column: OptionalColumn, shown: boolean) =>
                         this.#setView({ ...this.#state.view, columns: { ...this.#state.view.columns, [column]: shown } }),
                     staffEditor: {
