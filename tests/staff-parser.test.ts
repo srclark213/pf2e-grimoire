@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
     addCharges,
+    addStaffSpell,
+    moveStaffSpell,
+    removeStaffSpell,
     isEmptyStaffList,
     parseStaffSpells,
     prepareStaff,
@@ -125,5 +128,29 @@ describe("staff data and charges", () => {
         expect(restPreparation(["s1", "s2"], 6)).toEqual({ type: "ask", staffIds: ["s1", "s2"] });
         expect(restPreparation([], 6)).toEqual({ type: "none" });
         expect(restPreparation(["s1"], 0)).toEqual({ type: "none" });
+    });
+});
+
+describe("hand edits to a staff list", () => {
+    const heal = { uuid: "Compendium.pf2e.spells-srd.Item.heal", name: "Heal" };
+    const fireball = { uuid: "Compendium.pf2e.spells-srd.Item.fireball", name: "Fireball" };
+
+    it("adds a spell at a rank, ignoring duplicates and impossible ranks", () => {
+        const list = addStaffSpell({}, 3, fireball);
+        expect(list).toEqual({ 3: [fireball] });
+        expect(addStaffSpell(list, 3, fireball)).toBe(list);
+        expect(addStaffSpell(list, 11, heal)).toBe(list);
+        expect(addStaffSpell(list, 0, heal)).toEqual({ 0: [heal], 3: [fireball] });
+    });
+
+    it("removes a spell and drops the rank once it is empty", () => {
+        expect(removeStaffSpell({ 1: [heal], 3: [fireball] }, 3, fireball.uuid)).toEqual({ 1: [heal] });
+    });
+
+    it("moves a spell between ranks", () => {
+        expect(moveStaffSpell({ 1: [heal] }, 1, 2, heal.uuid)).toEqual({ 2: [heal] });
+        const list = { 1: [heal] };
+        expect(moveStaffSpell(list, 1, 1, heal.uuid)).toBe(list);
+        expect(moveStaffSpell(list, 2, 3, heal.uuid)).toBe(list);
     });
 });

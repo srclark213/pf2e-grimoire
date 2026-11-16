@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { StaffSnapshot } from "../spellbook/model.ts";
     import { canBoostStaff, type BoostSlot } from "../spellbook/staff.ts";
+    import StaffEditor, { type StaffEditorActions } from "./StaffEditor.svelte";
 
     interface Props {
         staves: StaffSnapshot[];
@@ -11,9 +12,12 @@
         /** The prepared caster's slot boost: slots they could expend, and whether today's is used */
         boost: { slots: BoostSlot[]; used: boolean };
         boostStaff: (staffId: string) => Promise<void>;
+        editor: StaffEditorActions;
     }
 
-    const { staves, legacyCount, prepare, importLegacy, boost, boostStaff }: Props = $props();
+    const { staves, legacyCount, prepare, importLegacy, boost, boostStaff, editor }: Props = $props();
+
+    let editing: string | null = $state(null);
 
     /** Only prepared casters (the animist included) have prepared slots to offer */
     const isPreparedCaster = $derived(boost.slots.length > 0 || boost.used);
@@ -99,6 +103,17 @@
             <button
                 type="button"
                 class="action"
+                class:active={editing === staff.id}
+                data-tooltip={t("Editor.Open")}
+                aria-label={t("Editor.Open")}
+                aria-expanded={editing === staff.id}
+                onclick={() => (editing = editing === staff.id ? null : staff.id)}
+            >
+                <i class="fa-solid fa-pen"></i>
+            </button>
+            <button
+                type="button"
+                class="action"
                 disabled={busy}
                 data-tooltip={t(staff.preparedByMe ? "Staff.Reprepare" : "Staff.Prepare")}
                 aria-label={t(staff.preparedByMe ? "Staff.Reprepare" : "Staff.Prepare")}
@@ -107,6 +122,11 @@
                 <i class="fa-solid fa-sun"></i>
             </button>
         </li>
+        {#if editing === staff.id}
+            <li class="editor-row">
+                <StaffEditor {staff} actions={editor} close={() => (editing = null)} />
+            </li>
+        {/if}
     {/each}
 </ul>
 
@@ -184,6 +204,10 @@
     }
     .action:hover:not(:disabled),
     .action:focus-visible {
+        opacity: 1;
+        background: color-mix(in srgb, currentColor 15%, transparent);
+    }
+    .action.active {
         opacity: 1;
         background: color-mix(in srgb, currentColor 15%, transparent);
     }

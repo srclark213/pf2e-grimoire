@@ -19,6 +19,8 @@ function staff(spells: StaffSpellSnapshot[], overrides: Partial<StaffSnapshot> =
         preparedByOther: false,
         charges: { value: 3, max: 7 },
         spells,
+        list: {},
+        manual: false,
         ...overrides,
     };
 }

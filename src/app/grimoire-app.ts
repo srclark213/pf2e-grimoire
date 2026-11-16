@@ -3,8 +3,16 @@ import type { ItemPF2e } from "@item";
 import { flushSync, mount, unmount } from "svelte";
 import { MODULE_ID } from "../constants.ts";
 import { castOption } from "../foundry/cast.ts";
-import { boostStaff, boostUsedToday, loadStaffSpells, prepareStaffFor } from "../foundry/staves.ts";
-import { boostSlots } from "../spellbook/staff.ts";
+import {
+    boostStaff,
+    boostUsedToday,
+    loadStaffSpells,
+    prepareStaffFor,
+    resetStaffSpells,
+    setStaffSpells,
+    spellRefFromDrop,
+} from "../foundry/staves.ts";
+import { boostSlots, type StaffSpellList } from "../spellbook/staff.ts";
 import { importLegacyStaves, legacyStaffEntries } from "../foundry/staves-import.ts";
 import { repairWand } from "../foundry/wands.ts";
 import { loadCollapsed, loadFilter, saveCollapsed, saveFilter } from "../foundry/filter-store.ts";
@@ -89,6 +97,11 @@ export class GrimoireApp extends ApplicationV2 {
                     prepareStaff: (staffId: string) => prepareStaffFor(this.actor, staffId),
                     importLegacyStaves: () => importLegacyStaves(this.actor),
                     boostStaff: (staffId: string) => boostStaff(this.actor, staffId, this.#state.boost.slots),
+                    staffEditor: {
+                        save: (staffId: string, list: StaffSpellList) => setStaffSpells(this.actor, staffId, list),
+                        reset: (staffId: string) => resetStaffSpells(this.actor, staffId),
+                        readDrop: spellRefFromDrop,
+                    },
                 },
             });
             flushSync();

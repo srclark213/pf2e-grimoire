@@ -9,6 +9,7 @@
     import SourceMenu from "./SourceMenu.svelte";
     import SpellRowView from "./SpellRowView.svelte";
     import StaffBar from "./StaffBar.svelte";
+    import type { StaffEditorActions } from "./StaffEditor.svelte";
 
     interface Props {
         grimoire: GrimoireState;
@@ -22,9 +23,10 @@
         prepareStaff: (staffId: string) => Promise<void>;
         importLegacyStaves: () => Promise<void>;
         boostStaff: (staffId: string) => Promise<void>;
+        staffEditor: StaffEditorActions;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff, staffEditor }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
@@ -103,6 +105,7 @@
             importLegacy={importLegacyStaves}
             boost={grimoire.boost}
             {boostStaff}
+            editor={staffEditor}
         />
     {/if}
 

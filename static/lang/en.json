@@ -64,6 +64,21 @@
             "ChooseHint": "{actor} carries more than one staff. Which one do you prepare today?",
             "ChooseNone": "None"
         },
+        "Editor": {
+            "Open": "Edit the staff's spells",
+            "Cantrip": "Cantrip",
+            "Rank": "Rank {rank}",
+            "MoveTo": "Move {spell} to another rank",
+            "Remove": "Remove {spell}",
+            "Drop": "Drag a spell here to add it at",
+            "Empty": "No spells on this staff yet.",
+            "Manual": "Edited by hand: the description isn't read any more.",
+            "FromDescription": "Read from the staff's description.",
+            "Reset": "Reset to description",
+            "Done": "Done",
+            "NotASpell": "Only spells can go on a staff.",
+            "NoSource": "{spell} has no compendium source, so it can't be added to a staff."
+        },
         "Boost": {
             "Button": "Add charges from a spell slot (once a day)",
             "Used": "Already added charges from a slot today",

@@ -4,6 +4,7 @@ import { MODULE_ID } from "../constants.ts";
 import type { SpellSnapshot, StaffSnapshot, StaffSpellSnapshot } from "../spellbook/model.ts";
 import {
     addCharges,
+    parseStaffSpells,
     prepareStaff,
     type BoostSlot,
     readStaffData,
@@ -13,6 +14,8 @@ import {
     staffEntries,
     unprepareStaff,
     type StaffData,
+    type StaffSpellList,
+    type StaffSpellRef,
 } from "../spellbook/staff.ts";
 
 const t = (key: string, data?: Record<string, unknown>) => game.i18n.localize(`PF2EGrimoire.${key}`, data);
@@ -90,8 +93,12 @@ export function readStaff(staff: WeaponPF2e): StaffData {
     return readStaffData(flags?.["staff"], staff.system.description.value);
 }
 
+/**
+ * Replaces the staff's Grimoire data. A plain update deep-merges, which would keep spells and ranks that
+ * an edit removed, so the whole object is replaced.
+ */
 export async function writeStaff(staff: WeaponPF2e, data: StaffData): Promise<void> {
-    await staff.update({ [STAFF_FLAG]: data });
+    await staff.update({ [STAFF_FLAG]: foundry.data.operators.ForcedReplacement.create(data) });
 }
 
 /** The highest spell slot rank across the character's prepared and spontaneous entries */
@@ -189,6 +196,8 @@ export function snapshotStaves(
             preparedByOther: data.preparedBy !== null && !preparedByMe,
             charges: preparedByMe ? { ...data.charges } : { value: 0, max: 0 },
             spells,
+            list: data.spells,
+            manual: data.manual,
         };
     });
 }
@@ -310,4 +319,45 @@ export async function prepareStavesOnRest(actor: CharacterPF2e): Promise<void> {
         const chosen = await askWhichStaff(actor, plan.staffIds);
         if (chosen) await prepareStaffFor(actor, chosen);
     }
+}
+
+/** Saves a hand-edited spell list (GRIM-21). The description is no longer read for this staff. */
+export async function setStaffSpells(actor: CharacterPF2e, staffId: string, list: StaffSpellList): Promise<void> {
+    const staff = carriedStaves(actor).find((s) => s.id === staffId);
+    if (!staff) return;
+    await writeStaff(staff, { ...readStaff(staff), spells: list, manual: true });
+}
+
+/** Drops hand edits: the staff reads its spells from the description again. */
+export async function resetStaffSpells(actor: CharacterPF2e, staffId: string): Promise<void> {
+    const staff = carriedStaves(actor).find((s) => s.id === staffId);
+    if (!staff) return;
+    await writeStaff(staff, {
+        ...readStaff(staff),
+        manual: false,
+        spells: parseStaffSpells(staff.system.description.value),
+    });
+}
+
+/**
+ * Reads a spell dragged onto the staff editor (from a compendium, the sidebar or a sheet). A spell owned by
+ * an actor is stored by the compendium spell it came from, since the copy may be deleted.
+ */
+export async function spellRefFromDrop(event: DragEvent): Promise<StaffSpellRef | null> {
+    const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event) as {
+        type?: string;
+        uuid?: string;
+    };
+    if (data.type !== "Item" || !data.uuid) return null;
+    const doc = (await fromUuid(data.uuid).catch(() => null)) as ItemPF2e | null;
+    if (!doc?.isOfType?.("spell")) {
+        ui.notifications.warn(t("Editor.NotASpell"));
+        return null;
+    }
+    const uuid = doc.parent ? doc.sourceId : doc.uuid;
+    if (!uuid) {
+        ui.notifications.warn(t("Editor.NoSource", { spell: doc.name }));
+        return null;
+    }
+    return { uuid, name: doc.name };
 }

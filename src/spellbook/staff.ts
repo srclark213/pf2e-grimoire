@@ -216,3 +216,32 @@ export function canBoostStaff(
 ): boolean {
     return staffPreparedByMe && !boostUsedToday && slots.length > 0;
 }
+
+/* Hand edits (GRIM-21). Each returns a new list; ranks left empty are dropped. */
+
+function tidy(list: StaffSpellList): StaffSpellList {
+    const result: StaffSpellList = {};
+    for (const [rank, spells] of Object.entries(list)) {
+        if (spells.length > 0) result[Number(rank)] = spells;
+    }
+    return result;
+}
+
+/** Adds a spell at a rank (0 for a cantrip). Already there: unchanged. */
+export function addStaffSpell(list: StaffSpellList, rank: number, spell: StaffSpellRef): StaffSpellList {
+    if (!Number.isInteger(rank) || rank < 0 || rank > 10) return list;
+    const atRank = list[rank] ?? [];
+    if (atRank.some((s) => s.uuid === spell.uuid)) return list;
+    return tidy({ ...list, [rank]: [...atRank, { uuid: spell.uuid, name: spell.name }] });
+}
+
+export function removeStaffSpell(list: StaffSpellList, rank: number, uuid: string): StaffSpellList {
+    return tidy({ ...list, [rank]: (list[rank] ?? []).filter((s) => s.uuid !== uuid) });
+}
+
+/** Moves a spell to another rank, keeping its name */
+export function moveStaffSpell(list: StaffSpellList, from: number, to: number, uuid: string): StaffSpellList {
+    const spell = (list[from] ?? []).find((s) => s.uuid === uuid);
+    if (!spell || from === to) return list;
+    return addStaffSpell(removeStaffSpell(list, from, uuid), to, spell);
+}

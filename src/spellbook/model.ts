@@ -1,4 +1,5 @@
 import type { SpellCategory } from "./categories.ts";
+import type { StaffSpellList } from "./staff.ts";
 import type { SpellFacets } from "./facets.ts";
 
 /**
@@ -110,6 +111,10 @@ export interface StaffSnapshot {
     charges: UsesSnapshot;
     /** The staff's spells whose compendium data has loaded */
     spells: StaffSpellSnapshot[];
+    /** The full list as stored or read from the description, for the editor */
+    list: StaffSpellList;
+    /** The list was edited by hand, so the description is no longer read */
+    manual: boolean;
 }
 
 /** One spell on a staff, at one rank */
