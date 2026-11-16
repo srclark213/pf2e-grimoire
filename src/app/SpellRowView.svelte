@@ -56,8 +56,13 @@
         }
     }
 
-    function buttonTooltip(option: CastOption, available: boolean): string {
-        return t(available ? "CastAt" : "SpentAt", { rank: option.rank, source: option.entryName });
+    function buttonTooltip(button: RankButton): string {
+        const base = t(button.available ? "CastAt" : "SpentAt", {
+            rank: button.option.rank,
+            source: button.option.entryName,
+        });
+        if (!button.warning || !button.casts) return base;
+        return `${base} ${t("CastsLeft", { left: button.casts.left, max: button.casts.max })}`;
     }
 
     function isItem(kind: string): boolean {
@@ -112,9 +117,11 @@
                     type="button"
                     class="rank"
                     class:wide={autoHeightened}
+                    class:low={button.available && button.warning === "low"}
+                    class:last={button.available && button.warning === "last"}
                     aria-disabled={!button.available || casting}
                     class:spent={!button.available}
-                    data-tooltip={buttonTooltip(button.option, button.available)}
+                    data-tooltip={buttonTooltip(button)}
                     onclick={() => button.available && onCast(button.option)}
                     oncontextmenu={(event) => {
                         event.preventDefault();
@@ -295,6 +302,21 @@
     }
     .rank:focus-visible {
         outline: 1px solid currentColor;
+    }
+    /* Running low at this rank: 2 casts left, then 1 */
+    .rank.low {
+        border-color: #d9a520;
+        background: color-mix(in srgb, #d9a520 40%, transparent);
+    }
+    .rank.last {
+        border-color: #d0453a;
+        background: color-mix(in srgb, #d0453a 45%, transparent);
+    }
+    .rank.low:hover {
+        background: color-mix(in srgb, #d9a520 60%, transparent);
+    }
+    .rank.last:hover {
+        background: color-mix(in srgb, #d0453a 65%, transparent);
     }
     .rank.spent {
         border-style: dashed;

@@ -217,6 +217,7 @@
             "ShowRank": "Base rank",
             "ShowFrom": "From (sources)"
         },
-        "CastShort": "Cast · {rank}"
+        "CastShort": "Cast · {rank}",
+        "CastsLeft": "{left} of {max} left at this rank."
     }
 }

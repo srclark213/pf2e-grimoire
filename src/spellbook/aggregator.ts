@@ -141,7 +141,7 @@ function castOptionsFor(actor: ActorSnapshot, entry: EntrySnapshot, spell: Spell
             const points = actor.focus?.value ?? 0;
             return [
                 withReason(
-                    { ...base, rank: spell.rank, available: points > 0, cost: { type: "focus", value: points } },
+                    { ...base, rank: spell.rank, available: points > 0, cost: { type: "focus", value: points, max: actor.focus?.max ?? 0 } },
                     "no-focus",
                 ),
             ];
@@ -271,7 +271,7 @@ function staffOption(staff: StaffSnapshot, listed: StaffSpellSnapshot): CastOpti
         staffRank: listed.rank,
         rank: listed.spell.rank,
         available: !reason,
-        cost: { type: "staff", charges, value: staff.charges.value },
+        cost: { type: "staff", charges, value: staff.charges.value, max: staff.charges.max },
     };
     return reason ? { ...option, reason } : option;
 }

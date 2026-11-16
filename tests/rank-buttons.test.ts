@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { aggregateSpells } from "../src/spellbook/aggregator.ts";
-import { rankButtons } from "../src/spellbook/rank-buttons.ts";
+import { castWarning, rankButtons } from "../src/spellbook/rank-buttons.ts";
 import { actor, cantrip, entry, slots, spell } from "./fixtures/spellbook.ts";
 
 function buttonsFor(snapshot: Parameters<typeof aggregateSpells>[0], name: string) {
@@ -98,5 +98,56 @@ describe("rankButtons", () => {
 
     it("gives an unprepared spell no buttons", () => {
         expect(buttonsFor(actor([entry("Wizard", "prepared", [spell("Alarm")])]), "Alarm")).toEqual([]);
+    });
+});
+
+describe("running-low warnings", () => {
+    const fireball = spell("Fireball", { id: "fb", baseRank: 3 });
+    const buttonAt = (slotsByRank: Parameters<typeof slots>[0], rank = 3) =>
+        rankButtons(
+            aggregateSpells(actor([entry("Spells", "spontaneous", [fireball], { slots: slots(slotsByRank) })]))[0]!,
+        ).find((b) => b.rank === rank)!;
+
+    it("counts a spontaneous rank's slots and warns at 2 (low) and 1 (last) once some are used", () => {
+        expect(buttonAt({ 3: { value: 4, max: 4 } })).toMatchObject({ casts: { left: 4, max: 4 }, warning: null });
+        expect(buttonAt({ 3: { value: 3, max: 4 } }).warning).toBeNull();
+        expect(buttonAt({ 3: { value: 2, max: 4 } }).warning).toBe("low");
+        expect(buttonAt({ 3: { value: 1, max: 4 } }).warning).toBe("last");
+        expect(buttonAt({ 3: { value: 0, max: 4 } }).warning).toBeNull();
+    });
+
+    it("doesn't flag something that only ever had one or two uses until one is spent", () => {
+        expect(buttonAt({ 3: { value: 2, max: 2 } }).warning).toBeNull();
+        expect(buttonAt({ 3: { value: 1, max: 2 } }).warning).toBe("last");
+        expect(castWarning({ left: 1, max: 1 })).toBeNull();
+    });
+
+    it("counts every prepared copy at the rank", () => {
+        const prepared = entry("Druid", "prepared", [fireball], {
+            slots: slots({
+                3: {
+                    prepared: [
+                        { id: "fb", expended: false },
+                        { id: "fb", expended: true },
+                        { id: "fb", expended: false },
+                    ],
+                },
+            }),
+        });
+        const [button] = rankButtons(aggregateSpells(actor([prepared]))[0]!);
+        expect(button).toMatchObject({ casts: { left: 2, max: 3 }, warning: "low" });
+    });
+
+    it("adds separate pools together, and leaves cantrips alone", () => {
+        const both = aggregateSpells(
+            actor([
+                entry("Spells", "spontaneous", [fireball], { slots: slots({ 3: { value: 1, max: 3 } }) }),
+                entry("Innate", "innate", [spell("Fireball", { id: "fb-i", baseRank: 3, uses: { value: 1, max: 1 } })]),
+            ]),
+        );
+        expect(rankButtons(both[0]!)[0]).toMatchObject({ casts: { left: 2, max: 4 }, warning: "low" });
+
+        const cantripRow = aggregateSpells(actor([entry("Spells", "spontaneous", [cantrip("Ignition")])]))[0]!;
+        expect(rankButtons(cantripRow)[0]).toMatchObject({ casts: null, warning: null });
     });
 });

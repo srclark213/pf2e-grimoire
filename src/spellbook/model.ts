@@ -149,13 +149,13 @@ export type CastCost =
     | { type: "prepared-slot" }
     | { type: "slot"; value: number; max: number }
     | { type: "innate"; value: number; max: number }
-    | { type: "focus"; value: number }
+    | { type: "focus"; value: number; max: number }
     | { type: "wand"; value: number; max: number }
     | { type: "scroll"; quantity: number }
     /** `destroys`: the wand was already overcharged today, so this destroys it with no spell */
     | { type: "overcharge"; destroys: boolean }
     /** `charges` spent from a staff that has `value` left */
-    | { type: "staff"; charges: number; value: number }
+    | { type: "staff"; charges: number; value: number; max: number }
     /** A spontaneous caster's 1 charge plus one of their slots (the lowest left at or above the spell's rank) */
     | { type: "staff+slot"; value: number; slotRank: number; slotEntryName: string };
 

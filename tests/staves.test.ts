@@ -37,8 +37,8 @@ describe("staff spells as sources", () => {
         ]);
         expect(breathe.baseRank).toBe(1);
         expect(rankButtons(breathe).map((b) => [b.rank, b.option.cost])).toEqual([
-            [1, { type: "staff", charges: 1, value: 3 }],
-            [2, { type: "staff", charges: 2, value: 3 }],
+            [1, { type: "staff", charges: 1, value: 3, max: 7 }],
+            [2, { type: "staff", charges: 2, value: 3, max: 7 }],
         ]);
         expect(breathe.castOptions[1]).toMatchObject({
             kind: "staff",
@@ -54,7 +54,7 @@ describe("staff spells as sources", () => {
         expect(ignition.castOptions[0]).toMatchObject({
             rank: 3,
             available: true,
-            cost: { type: "staff", charges: 0, value: 0 },
+            cost: { type: "staff", charges: 0, value: 0, max: 7 },
         });
     });
 
