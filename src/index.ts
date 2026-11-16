@@ -4,6 +4,7 @@ import { registerCollapsedSetting, registerFilterSetting } from "./foundry/filte
 import { registerViewSetting } from "./foundry/view-store.ts";
 import { registerRestHook } from "./foundry/wands.ts";
 import { openGrimoire, registerKeybinding, registerSheetButton } from "./launchers.ts";
+import { registerQuenchTests } from "./quench/index.ts";
 
 Hooks.once("init", () => {
     const module = game.modules.get(MODULE_ID);
@@ -16,6 +17,7 @@ Hooks.once("init", () => {
     registerKeybinding();
     registerSheetButton();
     registerRestHook();
+    registerQuenchTests();
     console.log(`PF2e Grimoire | Initializing v${module?.version ?? "?"}`);
 });
 

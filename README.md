@@ -22,6 +22,19 @@ npm run link
 | `npm test` | Vitest unit tests for the pure-logic modules. |
 | `npm run typecheck` | svelte-check over TypeScript and Svelte, including pf2e's types. |
 
+### In-world tests (Quench)
+
+`src/quench/` holds integration tests that run inside a live world with [Quench](https://github.com/Ethaks/FVTT-Quench): categories against the built pf2e compendium, every kind of cast clicked the way the window clicks it, wand overcharge, staves and Rest for the Night. They only register when Quench is active, so they do nothing in a normal game.
+
+Run them in a test world, as a GM: they create throwaway "Grimoire Test" characters and delete them, with their chat cards, afterwards. Open Quench's window (the flask in the scene controls), select the PF2e Grimoire batches and click Run.
+
+Quench 0.10.0 is only verified for Foundry v13. On v14 its results window must be open before a run starts, or the run stalls. From the console:
+
+```js
+quench.app.render(true);
+await quench.runBatches(["pf2e-grimoire.**"]);
+```
+
 ### pf2e types
 
 `vendor/pf2e` is a git submodule pinned to the `pf2e-8.7.0` tag. It is only there for types. Import from it with `import type` through the aliases (`@actor`, `@item`, `@module/...`, `@client/...` and so on). The build fails on a value import from pf2e. At runtime, reach pf2e classes through `CONFIG.PF2E`, `game.pf2e` or the documents themselves.
