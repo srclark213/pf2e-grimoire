@@ -54,7 +54,6 @@
     const template = $derived(
         [
             columns.rank ? "1.5rem" : "",
-            columns.casts ? "1.6rem" : "",
             "minmax(9rem, 1fr)",
             "2.4rem",
             `calc(${ranks.length} * 1.45rem + ${ranks.length - 1} * 0.15rem)`,
@@ -82,9 +81,6 @@
                 <span data-tooltip={t("Table.RankHint")}>{t("Table.Rank")}</span>
                 <i class={sortIcon("rank")}></i>
             </button>
-        {/if}
-        {#if columns.casts}
-            <span class="center-head" role="columnheader" data-tooltip={t("Table.CastsHint")}>{t("Table.Casts")}</span>
         {/if}
         <button type="button" class="sort" role="columnheader" onclick={() => setSort("name")}>
             {t("Table.Spell")} <i class={sortIcon("name")}></i>
@@ -162,10 +158,6 @@
     .sort:hover i,
     .sort:focus-visible i {
         opacity: 1;
-    }
-    .center-head {
-        text-align: center;
-        white-space: nowrap;
     }
     .rank-heads {
         display: grid;

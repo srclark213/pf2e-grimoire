@@ -4,7 +4,6 @@ import { extractFacets } from "../src/spellbook/facets.ts";
 import { rankButtons } from "../src/spellbook/rank-buttons.ts";
 import {
     actionGlyph,
-    castsLeft,
     DEFAULT_SORT,
     gridRanks,
     normalizeColumns,
@@ -14,7 +13,7 @@ import {
     splitRows,
     toggleSort,
 } from "../src/spellbook/table.ts";
-import { actor, cantrip, consumable, entry, slots, spell } from "./fixtures/spellbook.ts";
+import { actor, cantrip, entry, slots, spell } from "./fixtures/spellbook.ts";
 
 const save = (statistic: "fortitude" | "reflex" | "will") =>
     extractFacets({ defense: { save: { statistic, basic: false } } });
@@ -74,13 +73,8 @@ describe("sorting the spell table", () => {
         expect(normalizeSort(undefined)).toEqual(DEFAULT_SORT);
         expect(normalizeSort({ key: "save", dir: -1 })).toEqual({ key: "save", dir: -1 });
         expect(normalizeSort({ key: "bogus", dir: 7 })).toEqual({ key: "rank", dir: 1 });
-        expect(normalizeColumns(undefined)).toEqual({ rank: true, casts: true, from: true, cantrips: true });
-        expect(normalizeColumns({ from: false, cantrips: false })).toEqual({
-            rank: true,
-            casts: true,
-            from: false,
-            cantrips: false,
-        });
+        expect(normalizeColumns(undefined)).toEqual({ rank: true, from: true, cantrips: true });
+        expect(normalizeColumns({ from: false, cantrips: false })).toEqual({ rank: true, from: false, cantrips: false });
     });
 });
 
@@ -119,74 +113,5 @@ describe("action glyphs", () => {
         expect(actionGlyph(["1", "2", "3"])).toBe("1 – 3");
         expect(actionGlyph(["long"])).toBeNull();
         expect(actionGlyph([])).toBeNull();
-    });
-});
-
-describe("casts left today", () => {
-    const one = (row: ReturnType<typeof aggregateSpells>[number] | undefined) => castsLeft(row!);
-
-    it("is unlimited for cantrips", () => {
-        expect(one(rows().find((r) => r.name === "Ignition"))).toBeNull();
-    });
-
-    it("adds up a signature spell's slots at every rank it can use", () => {
-        // Disintegrate (signature, base 6): one rank-6 slot and one rank-7 slot
-        expect(one(rows().find((r) => r.name === "Disintegrate"))).toBe(2);
-    });
-
-    it("counts prepared copies, innate uses and focus points across sources", () => {
-        const heal = spell("Heal", { id: "heal" });
-        const [row] = aggregateSpells(
-            actor(
-                [
-                    entry("Cleric", "prepared", [heal], {
-                        slots: slots({
-                            1: { prepared: [{ id: "heal", expended: false }, { id: "heal", expended: true }] },
-                            2: { prepared: [{ id: "heal", expended: false }] },
-                        }),
-                    }),
-                    entry("Innate", "innate", [spell("Heal", { id: "heal-i", uses: { value: 1, max: 1 } })]),
-                ],
-            ),
-        );
-        expect(castsLeft(row!)).toBe(3);
-    });
-
-    it("counts a wand as 1, scrolls by quantity, and a staff by charges over the cheapest cost", () => {
-        const fireball = spell("Fireball", { baseRank: 3, rank: 3 });
-        const [row] = aggregateSpells(
-            actor([], {
-                consumables: [
-                    consumable("wand", fireball),
-                    consumable("scroll", fireball, { quantity: 2 }),
-                ],
-                staves: [
-                    {
-                        id: "staff",
-                        name: "Staff of Fire",
-                        held: true,
-                        preparedByMe: true,
-                        preparedByOther: false,
-                        charges: { value: 7, max: 7 },
-                        list: {},
-                        manual: false,
-                        spells: [
-                            { rank: 3, uuid: "u", spell: fireball, castable: true },
-                            { rank: 4, uuid: "u", spell: { ...fireball, rank: 4 }, castable: true },
-                        ],
-                    },
-                ],
-            }),
-        );
-        // wand 1 + scrolls 2 + staff floor(7 / 3) = 2
-        expect(castsLeft(row!)).toBe(5);
-    });
-
-    it("doesn't count a spent wand's overcharge", () => {
-        const fireball = spell("Fireball", { baseRank: 3, rank: 3 });
-        const [row] = aggregateSpells(
-            actor([], { consumables: [consumable("wand", fireball, { uses: { value: 0, max: 1 } })] }),
-        );
-        expect(castsLeft(row!)).toBe(0);
     });
 });
