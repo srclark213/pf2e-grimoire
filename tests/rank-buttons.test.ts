@@ -96,8 +96,10 @@ describe("rankButtons", () => {
         expect(buttons[0]?.option.kind).toBe("spontaneous");
     });
 
-    it("gives an unprepared spell no buttons", () => {
-        expect(buttonsFor(actor([entry("Wizard", "prepared", [spell("Alarm")])]), "Alarm")).toEqual([]);
+    it("doesn't list an unprepared spellbook spell at all", () => {
+        expect(() => buttonsFor(actor([entry("Wizard", "prepared", [spell("Alarm")], { slots: slots() })]), "Alarm")).toThrow(
+            "no row for Alarm",
+        );
     });
 });
 

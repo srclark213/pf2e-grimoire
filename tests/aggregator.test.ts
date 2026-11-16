@@ -87,12 +87,30 @@ describe("prepared casters", () => {
         expect(row(aggregateSpells(actor([wizard([true, true])])), "Force Barrage").available).toBe(false);
     });
 
-    it("dims a spell that is in the spellbook but not prepared", () => {
-        const rows = aggregateSpells(actor([entry("Wizard", "prepared", [missile])]));
-        const fb = row(rows, "Force Barrage");
-        expect(fb.castOptions).toEqual([]);
-        expect(fb.available).toBe(false);
-        expect(fb.sources).toHaveLength(1);
+    it("leaves out a spell that is in the spellbook but not prepared", () => {
+        const rows = aggregateSpells(actor([entry("Wizard", "prepared", [missile], { slots: slots() })]));
+        expect(rows.map((r) => r.name)).toEqual([]);
+    });
+
+    it("keeps a prepared spell after it is cast, shown spent", () => {
+        const rows = aggregateSpells(
+            actor([
+                entry("Wizard", "prepared", [missile], {
+                    slots: slots({ 1: { prepared: [{ id: missile.id, expended: true }] } }),
+                }),
+            ]),
+        );
+        expect(row(rows, "Force Barrage").available).toBe(false);
+    });
+
+    it("still lists an unprepared spellbook spell that another source can cast, without the prepared badge", () => {
+        const rows = aggregateSpells(
+            actor([
+                entry("Wizard", "prepared", [missile], { slots: slots() }),
+                entry("Innate", "innate", [spell("Force Barrage", { id: "fb-i", uses: { value: 1, max: 1 } })]),
+            ]),
+        );
+        expect(row(rows, "Force Barrage").sources.map((s) => s.entryName)).toEqual(["Innate"]);
     });
 
     it("casts a spell prepared in a higher slot at that slot's rank", () => {
@@ -184,9 +202,9 @@ describe("flexible casters", () => {
         ]);
     });
 
-    it("dims spells that aren't in today's collection", () => {
+    it("leaves out spells that aren't in today's collection", () => {
         const rows = aggregateSpells(actor([flexible([spell("Bane")])]));
-        expect(row(rows, "Bane").available).toBe(false);
+        expect(rows.map((r) => r.name)).toEqual([]);
     });
 
     it("still uses prepared slots for cantrips", () => {

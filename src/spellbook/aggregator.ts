@@ -20,8 +20,20 @@ import type {
 const MAX_RANK = 10;
 
 /**
+ * A prepared entry's spell list is the caster's whole spellbook; only what is prepared today can be cast.
+ * Prepared spells stay listed after being cast (shown spent). A flexible caster casts its signature
+ * (collection) spells, plus the cantrips it prepared. Other kinds of entry list only what they can cast.
+ */
+function isReadyToCast(entry: EntrySnapshot, spell: SpellSnapshot): boolean {
+    if (entry.category !== "prepared") return true;
+    if (entry.isFlexible && !spell.isCantrip) return spell.signature;
+    return entry.slots.some((slot) => slot.prepared.some((prepared) => prepared.id === spell.id));
+}
+
+/**
  * Turns every spell in every non-ritual spellcasting entry into one row per distinct spell.
  * Each row lists the entries that have the spell and every way it can be cast right now.
+ * Spells sitting unprepared in a prepared caster's spellbook are left out.
  */
 export function aggregateSpells(actor: ActorSnapshot): SpellRow[] {
     const rows = new Map<string, SpellRow>();
@@ -32,6 +44,7 @@ export function aggregateSpells(actor: ActorSnapshot): SpellRow[] {
     for (const entry of entries) {
         const kind: SourceKind = entry.category;
         for (const spell of entry.spells) {
+            if (!isReadyToCast(entry, spell)) continue;
             const row = getOrCreateRow(rows, spell);
             if (!row.spellIds.includes(spell.id)) row.spellIds.push(spell.id);
             if (!row.sources.some((s) => s.entryId === entry.id)) {

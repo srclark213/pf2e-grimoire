@@ -39,19 +39,35 @@ export function slots(byRank: Record<number, Partial<SlotRankSnapshot>> = {}): S
     return Array.from({ length: 11 }, (_, rank) => ({ value: 0, max: 0, prepared: [], ...byRank[rank] }));
 }
 
+/** One unexpended slot per spell at its base rank (cantrips in slot 0): "everything in the book is prepared" */
+function preparedSlots(spells: readonly SpellSnapshot[]): SlotRankSnapshot[] {
+    const byRank: Record<number, Partial<SlotRankSnapshot>> = {};
+    for (const s of spells) {
+        const rank = s.isCantrip ? 0 : s.baseRank;
+        const prepared = byRank[rank]?.prepared ?? [];
+        byRank[rank] = { prepared: [...prepared, { id: s.id, expended: false }] };
+    }
+    return slots(byRank);
+}
+
+/**
+ * A spellcasting entry. A prepared entry without `slots` has every spell prepared once at its base rank;
+ * pass `slots` to say exactly what is prepared (an unprepared spellbook spell isn't shown).
+ */
 export function entry(
     name: string,
     category: EntrySnapshot["category"],
     spells: SpellSnapshot[],
     overrides: Partial<EntrySnapshot> = {},
 ): EntrySnapshot {
+    const autoPrepare = category === "prepared" && !overrides.isFlexible;
     return {
         id: `${name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-")}-entry`,
         name,
         category,
         isFlexible: false,
         sort: 0,
-        slots: slots(),
+        slots: autoPrepare ? preparedSlots(spells) : slots(),
         spells,
         ...overrides,
     };
