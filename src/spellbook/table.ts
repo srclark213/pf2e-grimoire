@@ -1,6 +1,5 @@
 import type { ActionKey, SpellDefense } from "./facets.ts";
 import type { SpellRow } from "./model.ts";
-import type { RankButton } from "./rank-buttons.ts";
 
 /**
  * The spell table: one line per spell, sortable, with each rank's button in its own column so a rank-5
@@ -15,13 +14,15 @@ export interface SortState {
 /** Base rank, then name: higher-rank spells collect at the bottom, as the old grouped list had them. */
 export const DEFAULT_SORT: SortState = { key: "rank", dir: 1 };
 
-/** Columns the player can hide */
-export type OptionalColumn = "rank" | "from";
+/** Columns the player can hide, and the cantrip group's open state */
+export type OptionalColumn = "rank" | "from" | "cantrips";
 export interface ColumnState {
     rank: boolean;
     from: boolean;
+    /** The cantrip and focus spell group is expanded */
+    cantrips: boolean;
 }
-export const DEFAULT_COLUMNS: ColumnState = { rank: true, from: true };
+export const DEFAULT_COLUMNS: ColumnState = { rank: true, from: true, cantrips: true };
 
 const SAVE_ORDER: (SpellDefense | null)[] = ["fortitude", "reflex", "will", "ac", null];
 
@@ -52,12 +53,20 @@ export function normalizeSort(saved: unknown): SortState {
 
 export function normalizeColumns(saved: unknown): ColumnState {
     const raw = (saved && typeof saved === "object" ? saved : {}) as Partial<ColumnState>;
-    return { rank: raw.rank !== false, from: raw.from !== false };
+    return { rank: raw.rank !== false, from: raw.from !== false, cantrips: raw.cantrips !== false };
+}
+
+/** Cantrips and focus spells (always cast at the character's top rank) apart from everything else */
+export function splitRows(rows: readonly SpellRow[]): { autoHeightened: SpellRow[]; ranked: SpellRow[] } {
+    return {
+        autoHeightened: rows.filter((r) => r.baseRank === 0),
+        ranked: rows.filter((r) => r.baseRank > 0),
+    };
 }
 
 /**
- * The rank grid's columns: 0 (cantrips and focus spells, which heighten on their own) then 1 up to the
- * highest rank any row can be cast at.
+ * The rank grid's columns, 1 up to the highest rank any ranked spell can be cast at. Cantrips and focus
+ * spells live in their own group with a single button, so they don't stretch the grid to the top rank.
  */
 export function gridRanks(rows: readonly SpellRow[]): number[] {
     let highest = 1;
@@ -65,12 +74,7 @@ export function gridRanks(rows: readonly SpellRow[]): number[] {
         if (row.baseRank === 0) continue;
         for (const option of row.castOptions) highest = Math.max(highest, option.rank);
     }
-    return Array.from({ length: highest + 1 }, (_, i) => i);
-}
-
-/** The grid column a button belongs in: cantrips and focus spells go in column 0 whatever rank they cast at. */
-export function buttonColumn(row: SpellRow, button: RankButton): number {
-    return row.baseRank === 0 ? 0 : button.rank;
+    return Array.from({ length: highest }, (_, i) => i + 1);
 }
 
 /** The label in the rank column and on a cantrip or focus spell's button: C, F or the rank */

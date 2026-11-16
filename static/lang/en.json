@@ -216,6 +216,7 @@
             "Columns": "Columns",
             "ShowRank": "Base rank",
             "ShowFrom": "From (sources)"
-        }
+        },
+        "CastShort": "Cast · {rank}"
     }
 }

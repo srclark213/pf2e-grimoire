@@ -2,7 +2,7 @@
     import type { CastOption, SpellRow } from "../spellbook/model.ts";
     import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import type { RankButton } from "../spellbook/rank-buttons.ts";
-    import { gridRanks, type ColumnState, type SortKey, type SortState } from "../spellbook/table.ts";
+    import { gridRanks, splitRows, type ColumnState, type SortKey, type SortState } from "../spellbook/table.ts";
     import SpellRowView from "./SpellRowView.svelte";
 
     interface Props {
@@ -14,6 +14,9 @@
         sort: SortState;
         columns: ColumnState;
         setSort: (key: SortKey) => void;
+        /** The rank cantrips and focus spells heighten to */
+        cantripRank: number;
+        toggleCantrips: () => void;
         openSpell: (spellId: string) => void;
         cast: (option: CastOption) => Promise<void>;
         openMenu: (event: MouseEvent, button: RankButton) => void;
@@ -21,10 +24,31 @@
         knownTags: string[];
     }
 
-    const { rows, allRows, priority, sort, columns, setSort, openSpell, cast, openMenu, setTags, knownTags }: Props =
-        $props();
+    const {
+        rows,
+        allRows,
+        priority,
+        sort,
+        columns,
+        setSort,
+        cantripRank,
+        toggleCantrips,
+        openSpell,
+        cast,
+        openMenu,
+        setTags,
+        knownTags,
+    }: Props = $props();
 
-    const t = (key: string) => game.i18n.localize(`PF2EGrimoire.${key}`);
+    const t = (key: string, data?: Record<string, unknown>) => game.i18n.localize(`PF2EGrimoire.${key}`, data);
+    const groups = $derived(splitRows(rows));
+    const hasFocus = $derived(groups.autoHeightened.some((r) => r.isFocus));
+    const hasCantrips = $derived(groups.autoHeightened.some((r) => !r.isFocus));
+    const groupTitle = $derived(
+        t(hasFocus && hasCantrips ? "CantripsAndFocus" : hasFocus ? "FocusAtRank" : "CantripsAtRank", {
+            rank: cantripRank,
+        }),
+    );
 
     const ranks = $derived(gridRanks(allRows));
     const template = $derived(
@@ -66,14 +90,34 @@
         </button>
         <span class="rank-heads" role="columnheader" data-tooltip={t("Table.CastHint")}>
             {#each ranks as rank (rank)}
-                <span>{rank === 0 ? "C" : rank}</span>
+                <span>{rank}</span>
             {/each}
         </span>
         {#if columns.from}
             <span class="from" role="columnheader">{t("Table.From")}</span>
         {/if}
     </div>
-    {#each rows as row (row.key)}
+    {#if groups.autoHeightened.length > 0}
+        <button
+            type="button"
+            class="group-toggle"
+            aria-expanded={columns.cantrips}
+            onclick={toggleCantrips}
+        >
+            <i class={columns.cantrips ? "fa-solid fa-caret-down" : "fa-solid fa-caret-right"}></i>
+            <span class="group-title">{groupTitle}</span>
+            <span class="group-count">{groups.autoHeightened.length}</span>
+        </button>
+        {#if columns.cantrips}
+            {#each groups.autoHeightened as row (row.key)}
+                <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {cast} {openMenu} {setTags} {knownTags} />
+            {/each}
+        {/if}
+        {#if groups.ranked.length > 0}
+            <div class="group-divider" role="presentation"></div>
+        {/if}
+    {/if}
+    {#each groups.ranked as row (row.key)}
         <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {cast} {openMenu} {setTags} {knownTags} />
     {/each}
 </div>
@@ -123,5 +167,37 @@
     }
     .from {
         white-space: nowrap;
+    }
+    .group-toggle {
+        all: unset;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        width: 100%;
+        padding: 0.3rem 0.35rem;
+        border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+    .group-toggle:hover,
+    .group-toggle:focus-visible {
+        background: color-mix(in srgb, currentColor 8%, transparent);
+    }
+    .group-toggle i {
+        width: 0.7rem;
+        opacity: 0.7;
+    }
+    .group-title {
+        flex: 1;
+        font-weight: bold;
+    }
+    .group-count {
+        font-size: 0.75rem;
+        opacity: 0.6;
+    }
+    .group-divider {
+        height: 0.4rem;
+        border-bottom: 1px solid color-mix(in srgb, currentColor 25%, transparent);
     }
 </style>

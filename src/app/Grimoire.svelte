@@ -132,6 +132,8 @@
                 sort={grimoire.view.sort}
                 columns={grimoire.view.columns}
                 {setSort}
+                cantripRank={grimoire.cantripRank}
+                toggleCantrips={() => setColumn("cantrips", !grimoire.view.columns.cantrips)}
                 {openSpell}
                 {cast}
                 {openMenu}

@@ -4,13 +4,13 @@ import { extractFacets } from "../src/spellbook/facets.ts";
 import { rankButtons } from "../src/spellbook/rank-buttons.ts";
 import {
     actionGlyph,
-    buttonColumn,
     DEFAULT_SORT,
     gridRanks,
     normalizeColumns,
     normalizeSort,
     rankLabel,
     sortRows,
+    splitRows,
     toggleSort,
 } from "../src/spellbook/table.ts";
 import { actor, cantrip, entry, slots, spell } from "./fixtures/spellbook.ts";
@@ -73,23 +73,34 @@ describe("sorting the spell table", () => {
         expect(normalizeSort(undefined)).toEqual(DEFAULT_SORT);
         expect(normalizeSort({ key: "save", dir: -1 })).toEqual({ key: "save", dir: -1 });
         expect(normalizeSort({ key: "bogus", dir: 7 })).toEqual({ key: "rank", dir: 1 });
-        expect(normalizeColumns(undefined)).toEqual({ rank: true, from: true });
-        expect(normalizeColumns({ from: false })).toEqual({ rank: true, from: false });
+        expect(normalizeColumns(undefined)).toEqual({ rank: true, from: true, cantrips: true });
+        expect(normalizeColumns({ from: false, cantrips: false })).toEqual({ rank: true, from: false, cantrips: false });
     });
 });
 
 describe("the rank grid", () => {
-    it("has a column for auto-heightened spells, then 1 up to the highest castable rank", () => {
-        expect(gridRanks(rows())).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    it("runs from 1 to the highest rank a ranked spell can be cast at", () => {
+        expect(gridRanks(rows())).toEqual([1, 2, 3, 4, 5, 6, 7]);
     });
 
-    it("puts cantrip buttons in column 0 whatever rank they cast at, and others at their rank", () => {
-        const all = rows();
-        const ignition = all.find((r) => r.name === "Ignition")!;
-        const disintegrate = all.find((r) => r.name === "Disintegrate")!;
-        expect(rankButtons(ignition).map((b) => buttonColumn(ignition, b))).toEqual([0]);
-        expect(rankButtons(disintegrate).map((b) => buttonColumn(disintegrate, b))).toEqual([6, 7]);
-        expect(rankLabel(ignition)).toBe("C");
+    it("isn't stretched by cantrips, which cast at the character's top rank", () => {
+        const onlyLow = aggregateSpells(
+            actor([
+                entry("Spells", "spontaneous", [spell("Fear"), cantrip("Ignition", { rank: 7 })], {
+                    slots: slots({ 1: { value: 1, max: 1 } }),
+                }),
+            ]),
+        );
+        expect(gridRanks(onlyLow)).toEqual([1]);
+    });
+
+    it("splits cantrips and focus spells from ranked spells", () => {
+        const { autoHeightened, ranked } = splitRows(rows());
+        expect(names(autoHeightened)).toEqual(["Ignition"]);
+        expect(names(ranked)).toHaveLength(4);
+        const disintegrate = ranked.find((r) => r.name === "Disintegrate")!;
+        expect(rankButtons(disintegrate).map((b) => b.rank)).toEqual([6, 7]);
+        expect(rankLabel(autoHeightened[0]!)).toBe("C");
         expect(rankLabel(disintegrate)).toBe("6");
     });
 });

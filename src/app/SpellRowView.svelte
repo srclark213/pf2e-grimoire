@@ -3,13 +3,13 @@
     import type { CastOption, SpellRow } from "../spellbook/model.ts";
     import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import { rankButtons, type RankButton } from "../spellbook/rank-buttons.ts";
-    import { actionGlyph, buttonColumn, rankLabel, type ColumnState } from "../spellbook/table.ts";
+    import { actionGlyph, rankLabel, type ColumnState } from "../spellbook/table.ts";
     import { addTag, removeTag } from "../spellbook/tags.ts";
 
     interface Props {
         row: SpellRow;
         priority: PriorityGroup[];
-        /** The rank grid's columns (0 = cantrips and focus spells) */
+        /** The rank grid's columns. Cantrips and focus spells ignore it and show their one button. */
         ranks: number[];
         columns: ColumnState;
         openSpell: (spellId: string) => void;
@@ -37,7 +37,8 @@
 
     const buttons = $derived(rankButtons(row, priority));
     /** The button in each grid column, if the spell can be cast there */
-    const byColumn = $derived(new Map(buttons.map((b) => [buttonColumn(row, b), b])));
+    const byColumn = $derived(new Map(buttons.map((b) => [b.rank, b])));
+    const autoHeightened = $derived(row.baseRank === 0);
     const glyph = $derived(actionGlyph(row.facets.actions));
     const isLong = $derived(row.facets.actions.includes("long"));
     const save = $derived(row.facets.defense ? t(`Defense.Short.${row.facets.defense}`) : "");
@@ -103,13 +104,14 @@
         {/if}
     </span>
     <span class="cell save" role="cell">{save}</span>
-    <span class="cell ranks" role="cell">
-        {#each ranks as column (column)}
+    <span class="cell ranks" class:single={autoHeightened} role="cell">
+        {#each autoHeightened ? buttons.map((b) => b.rank) : ranks as column (column)}
             {@const button = byColumn.get(column)}
             {#if button}
                 <button
                     type="button"
                     class="rank"
+                    class:wide={autoHeightened}
                     aria-disabled={!button.available || casting}
                     class:spent={!button.available}
                     data-tooltip={buttonTooltip(button.option, button.available)}
@@ -120,7 +122,7 @@
                         openMenu(event, button);
                     }}
                 >
-                    {button.rank}
+                    {autoHeightened ? t("CastShort", { rank: button.rank }) : button.rank}
                 </button>
             {:else}
                 <span class="rank-gap"></span>
@@ -265,6 +267,14 @@
         display: grid;
         grid-template-columns: var(--grimoire-rank-columns);
         gap: 0.15rem;
+    }
+    /* Cantrips and focus spells: one button, not placed in a rank column */
+    .ranks.single {
+        display: flex;
+    }
+    .rank.wide {
+        width: auto;
+        padding: 0 0.6rem;
     }
     .rank {
         all: unset;
