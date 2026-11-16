@@ -339,6 +339,49 @@
                 "CompositeHint": "Combines several of your elements",
                 "Overflow": "Overflow",
                 "OverflowHint": "Deactivates your kinetic aura. One overflow impulse per round."
+            },
+            "Tab": {
+                "play": "Play",
+                "manage": "Impulses"
+            },
+            "Manage": {
+                "ReflowLeft": "Reflow Elements: {left} of {perDay} left today",
+                "ReflowHint": "During daily preparations, swap an impulse feat for another of the same element. Resets when you Rest for the Night.",
+                "NoReflow": "No Reflow Elements yet",
+                "NoReflowHint": "Kineticists gain Reflow Elements at 11th level. You can still browse every impulse your gates allow.",
+                "Yours": "Your impulse feats",
+                "NoneOwned": "No impulse feats.",
+                "ClassSlot": "Class feat {level}",
+                "GrantedBy": "From {name}",
+                "NoSlot": "No slot",
+                "SlotHint": "A replacement can be up to level {level}.",
+                "Reflow": "Reflow",
+                "ReflowButtonHint": "Swap this for another impulse of its element, up to level {level}.",
+                "Cancel": "Cancel",
+                "Block": {
+                    "Composite": "Composite impulses can't be reflowed.",
+                    "NoElement": "Impulses that vary by element can't be reflowed.",
+                    "SeveralElements": "Only impulses with exactly one element can be reflowed."
+                },
+                "Catalog": "Impulses your gates allow",
+                "Reflowing": "Reflowing {name}",
+                "ReflowingHint": "Choose a {element} impulse of level {level} or lower that you don't already have.",
+                "Search": "Search impulses",
+                "HideOwned": "Hide ones you have",
+                "Loading": "Loading impulses from the compendium…",
+                "LoadError": "Couldn't load pf2e's feat compendium.",
+                "NoChoices": "No impulse fits this slot.",
+                "NoMatches": "No impulses match.",
+                "Level": "Level {level}",
+                "AnyElement": "Any element",
+                "AnyElementHint": "Works with whichever element you channel",
+                "Owned": "Have it",
+                "SwapIn": "Swap in",
+                "ConfirmTitle": "Reflow Elements",
+                "Confirm": "Replace {old} with {new}? This uses one of your reflows today ({left} of {perDay} left).",
+                "ConfirmNoneLeft": "You've used today's reflows. Replace {old} with {new} anyway, for example to retrain?",
+                "NotFound": "That impulse is no longer in the compendium.",
+                "Swapped": "Reflowed {old} into {new}."
             }
         }
     }

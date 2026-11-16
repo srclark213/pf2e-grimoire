@@ -14,6 +14,7 @@ import {
     useKineticItem,
 } from "../foundry/kinetic.ts";
 import { rollDataLookup, snapshotKineticist } from "../foundry/kinetic-snapshot.ts";
+import { loadImpulseCatalog, ownedImpulses, reflowImpulse, reflowStatus } from "../foundry/reflow.ts";
 import Kinetic from "./Kinetic.svelte";
 import { KineticState, type KineticActions } from "./kinetic-state.svelte.ts";
 
@@ -86,6 +87,15 @@ export class KineticApp extends ApplicationV2 {
                 const itemId = this.#state.snapshot?.blast?.itemId;
                 if (itemId) await setBlastCost(actor, itemId, cost);
             },
+            loadCatalog: async () => {
+                if (this.#state.catalog) return;
+                this.#state.catalog = await loadImpulseCatalog();
+            },
+            openUuid: async (uuid) => {
+                const doc = (await fromUuid(uuid)) as { sheet?: { render(force: boolean): unknown } } | null;
+                doc?.sheet?.render(true);
+            },
+            reflow: (oldId, newUuid) => reflowImpulse(actor, oldId, newUuid),
         };
         this.#component = mount(Kinetic, { target: content, props: { kinetic: this.#state, actions } });
         flushSync();
@@ -125,5 +135,7 @@ export class KineticApp extends ApplicationV2 {
     async #refresh(): Promise<void> {
         this.#state.snapshot = await snapshotKineticist(this.actor);
         this.#state.lookup = rollDataLookup(this.actor);
+        this.#state.owned = ownedImpulses(this.actor);
+        this.#state.reflow = reflowStatus(this.actor);
     }
 }

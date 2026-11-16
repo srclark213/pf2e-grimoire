@@ -1,6 +1,7 @@
 import type { CharacterPF2e } from "@actor";
 import type { ConsumablePF2e } from "@item";
 import { MODULE_ID } from "../constants.ts";
+import { resetReflow } from "./reflow.ts";
 import { prepareStavesOnRest } from "./staves.ts";
 import {
     OVERCHARGE_DC,
@@ -92,5 +93,6 @@ export function registerRestHook(): void {
             .map((item) => ({ _id: item.id, [`flags.${MODULE_ID}.overchargedOn`]: null }));
         if (updates.length > 0) void actor.updateEmbeddedDocuments("Item", updates);
         void prepareStavesOnRest(actor);
+        void resetReflow(actor);
     });
 }

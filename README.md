@@ -10,6 +10,8 @@ Kineticists also get a **Kinetic Gate** dashboard (sheet header button, or Shift
 
 A world setting, "Kineticist automation", turns the chat-card tracking off.
 
+The dashboard's **Impulses** tab lists the kineticist's impulse feats and every impulse in pf2e's compendium that their gates allow, with search and element filters. With Reflow Elements (Double Reflow for two), an impulse can be swapped for an unowned one of the same single element, no higher than the slot it fills. The swap keeps the feat slot or, for an impulse a gate granted, updates that gate's grant and choice. Swaps reset when the character Rests for the Night.
+
 ## Development
 
 You need Node 22 or later and git.

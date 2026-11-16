@@ -3,6 +3,7 @@
     import { channelRiderOpen, liveInfusion, overflowUsed } from "../kinetic/state.ts";
     import BlastPanel from "./BlastPanel.svelte";
     import ImpulseList from "./ImpulseList.svelte";
+    import ManageImpulses from "./ManageImpulses.svelte";
     import type { KineticActions, KineticState } from "./kinetic-state.svelte.ts";
     import { ELEMENT_ICONS, costGlyph, elementLabel, t } from "./kinetic-ui.ts";
 
@@ -22,6 +23,7 @@
     const effects = $derived(snapshot?.effects.filter((e) => !e.aura) ?? []);
 
     let busy = $state(false);
+    let view: "play" | "manage" = $state("play");
 
     async function run(fn: () => Promise<void>): Promise<void> {
         if (busy) return;
@@ -42,6 +44,33 @@
 
 {#if snapshot}
     <div class="kinetic">
+        <div class="tabs" role="tablist">
+            {#each ["play", "manage"] as const as tab (tab)}
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={view === tab}
+                    class:active={view === tab}
+                    onclick={() => (view = tab)}
+                >
+                    <i class="fa-solid {tab === 'play' ? 'fa-hurricane' : 'fa-book-open'}"></i>
+                    {t(`Tab.${tab}`)}
+                </button>
+            {/each}
+        </div>
+        {#if view === "manage"}
+            <div class="scroll">
+                <ManageImpulses
+                    elements={snapshot.elements}
+                    level={snapshot.level}
+                    owned={kinetic.owned}
+                    catalog={kinetic.catalog}
+                    reflow={kinetic.reflow}
+                    lookup={kinetic.lookup}
+                    {actions}
+                />
+            </div>
+        {:else}
         <section class="gate" class:active={snapshot.aura.active}>
             <div class="aura">
                 <i class="fa-solid fa-hurricane aura-icon"></i>
@@ -210,6 +239,7 @@
 
             <ImpulseList {rows} {actions} />
         </div>
+        {/if}
     </div>
 {/if}
 
@@ -223,6 +253,27 @@
         gap: 0.4rem;
         height: 100%;
         min-height: 0;
+    }
+    .tabs {
+        display: flex;
+        gap: 0.25rem;
+        border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    }
+    .tabs button {
+        all: unset;
+        padding: 0.2rem 0.7rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        opacity: 0.65;
+        border-bottom: 2px solid transparent;
+    }
+    .tabs button.active {
+        opacity: 1;
+        font-weight: bold;
+        border-bottom-color: var(--kinetic-accent);
+    }
+    .tabs button:focus-visible {
+        outline: 1px solid currentColor;
     }
     .scroll {
         flex: 1;
