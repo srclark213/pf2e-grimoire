@@ -10,8 +10,12 @@ import { overchargeWand } from "./wands.ts";
  */
 export async function castOption(actor: CharacterPF2e, option: CastOption): Promise<void> {
     if (option.kind === "wand-overcharge") return overchargeWand(actor, option.entryId);
-    if (option.kind === "staff" && option.spellUuid) {
-        return castFromStaff(actor, option.entryId, option.spellUuid, option.staffRank ?? 0);
+    if ((option.kind === "staff" || option.kind === "staff+slot") && option.spellUuid) {
+        const slot =
+            option.kind === "staff+slot" && option.slotEntryId && option.slotRank
+                ? { entryId: option.slotEntryId, rank: option.slotRank }
+                : null;
+        return castFromStaff(actor, option.entryId, option.spellUuid, option.staffRank ?? 0, slot);
     }
     if (option.kind === "wand" || option.kind === "scroll") {
         // pf2e's consume() casts the embedded spell (or runs Trick Magic Item), then spends the wand's

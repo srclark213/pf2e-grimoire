@@ -48,7 +48,8 @@
             "Overcharge": "Overcharge: DC 10 flat check, breaks or destroys the wand",
             "OverchargeRepeat": "Destroys the wand: already overcharged today",
             "Staff": "{charges} staff charges ({value} left)",
-            "StaffCantrip": "Free staff cantrip"
+            "StaffCantrip": "Free staff cantrip",
+            "StaffSlot": "1 staff charge ({value} left) + rank {rank} slot ({entry})"
         },
         "Staff": {
             "Charges": "{value} of {max} charges",

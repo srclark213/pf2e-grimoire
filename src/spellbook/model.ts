@@ -150,7 +150,9 @@ export type CastCost =
     /** `destroys`: the wand was already overcharged today, so this destroys it with no spell */
     | { type: "overcharge"; destroys: boolean }
     /** `charges` spent from a staff that has `value` left */
-    | { type: "staff"; charges: number; value: number };
+    | { type: "staff"; charges: number; value: number }
+    /** A spontaneous caster's 1 charge plus one of their slots (the lowest left at or above the spell's rank) */
+    | { type: "staff+slot"; value: number; slotRank: number; slotEntryName: string };
 
 /** Why an option can't be cast right now */
 export type UnavailableReason =
@@ -175,6 +177,9 @@ export interface CastOption {
     spellUuid?: string;
     /** Staves: the rank on the staff's list (0 for cantrips), which sets the charge cost */
     staffRank?: number;
+    /** Staff + slot: the spontaneous entry and slot rank spent alongside 1 charge */
+    slotEntryId?: string;
+    slotRank?: number;
     rank: number;
     /** For prepared casters, which slot at `rank` is spent */
     slotIndex?: number;

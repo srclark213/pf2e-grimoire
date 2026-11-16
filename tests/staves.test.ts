@@ -86,8 +86,55 @@ describe("staff spells as sources", () => {
             }),
         );
         const [button] = rankButtons(rows[0]!);
-        expect(button!.options.map((o) => o.kind)).toEqual(["spontaneous", "staff"]);
+        expect(button!.options.map((o) => o.kind)).toEqual(["spontaneous", "staff", "staff+slot"]);
         expect(button!.option.kind).toBe("spontaneous");
+    });
+});
+
+describe("spontaneous staff + slot", () => {
+    const sorcerer = (slotsByRank: Parameters<typeof slots>[0]) =>
+        entry("Apparition", "spontaneous", [], { slots: slots(slotsByRank) });
+    const optionsFor = (staffRank: number, slotsByRank: Parameters<typeof slots>[0], over: Partial<StaffSnapshot> = {}) =>
+        aggregateSpells(
+            actor([sorcerer(slotsByRank)], { staves: [staff([listed(staffRank, "Heal")], over)] }),
+        )[0]!.castOptions.filter((o) => o.kind === "staff+slot");
+
+    it("costs 1 charge plus the lowest slot left at or above the spell's rank, at the staff rank", () => {
+        const [option] = optionsFor(3, { 2: { value: 2, max: 2 }, 3: { value: 0, max: 2 }, 4: { value: 1, max: 2 } });
+        expect(option).toMatchObject({
+            available: true,
+            rank: 3,
+            staffRank: 3,
+            slotEntryId: "apparition-entry",
+            slotRank: 4,
+            cost: { type: "staff+slot", value: 3, slotRank: 4, slotEntryName: "Apparition" },
+        });
+    });
+
+    it("is never picked by a click", () => {
+        const rows = aggregateSpells(
+            actor([sorcerer({ 3: { value: 1, max: 1 } })], {
+                staves: [staff([listed(3, "Heal")], { charges: { value: 2, max: 7 } })],
+            }),
+        );
+        const [button] = rankButtons(rows[0]!);
+        // The staff alone needs 3 charges, so only staff + slot could cast it; a click still won't.
+        expect(button!.available).toBe(false);
+        expect(button!.options.find((o) => o.kind === "staff+slot")?.available).toBe(true);
+    });
+
+    it("needs a slot left, a charge, and the staff prepared", () => {
+        expect(optionsFor(3, { 3: { value: 0, max: 2 } })[0]).toMatchObject({ available: false, reason: "no-slots" });
+        expect(optionsFor(3, { 3: { value: 1, max: 2 } }, { charges: { value: 0, max: 7 } })[0]?.reason).toBe(
+            "no-charges",
+        );
+        expect(optionsFor(3, { 3: { value: 1, max: 2 } }, { preparedByMe: false })[0]?.reason).toBe("not-prepared");
+    });
+
+    it("isn't offered for rank 1 spells, cantrips, or casters without slots that high", () => {
+        expect(optionsFor(1, { 1: { value: 3, max: 3 } })).toEqual([]);
+        expect(optionsFor(0, { 1: { value: 3, max: 3 } })).toEqual([]);
+        expect(optionsFor(5, { 3: { value: 3, max: 3 } })).toEqual([]);
     });
 });
 

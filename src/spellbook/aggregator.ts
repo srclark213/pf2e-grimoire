@@ -67,6 +67,7 @@ export function aggregateSpells(actor: ActorSnapshot): SpellRow[] {
                 fixedRanks.set(row.key, [...(fixedRanks.get(row.key) ?? []), listed.spell.baseRank]);
             }
             row.castOptions.push(staffOption(staff, listed));
+            row.castOptions.push(...staffSlotOptions(actor.entries, staff, listed));
         }
     }
 
@@ -273,6 +274,51 @@ function staffOption(staff: StaffSnapshot, listed: StaffSpellSnapshot): CastOpti
         cost: { type: "staff", charges, value: staff.charges.value },
     };
     return reason ? { ...option, reason } : option;
+}
+
+/**
+ * A spontaneous caster can cast a staff spell for 1 charge plus one of their own slots of at least the
+ * spell's rank (the lowest such slot left). Offered only for rank 2 and up, where it saves charges; it is
+ * never auto-picked. The spell is still cast at its rank on the staff.
+ */
+function staffSlotOptions(
+    entries: readonly EntrySnapshot[],
+    staff: StaffSnapshot,
+    listed: StaffSpellSnapshot,
+): CastOption[] {
+    if (listed.rank < 2) return [];
+    const options: CastOption[] = [];
+    for (const entry of entries) {
+        if (entry.category !== "spontaneous") continue;
+        const ranks = entry.slots.map((slot, rank) => ({ rank, slot })).filter(({ rank }) => rank >= listed.rank);
+        if (!ranks.some(({ slot }) => slot.max > 0)) continue;
+        const usable = ranks.find(({ slot }) => slot.value > 0);
+        const reason: UnavailableReason | undefined = !listed.castable
+            ? "cannot-cast"
+            : !staff.preparedByMe
+              ? "not-prepared"
+              : staff.charges.value < 1
+                ? "no-charges"
+                : !usable
+                  ? "no-slots"
+                  : undefined;
+        const slotRank = usable?.rank ?? listed.rank;
+        const option: CastOption = {
+            kind: "staff+slot",
+            entryId: staff.id,
+            entryName: staff.name,
+            spellId: staff.id,
+            spellUuid: listed.uuid,
+            staffRank: listed.rank,
+            slotEntryId: entry.id,
+            slotRank,
+            rank: listed.spell.rank,
+            available: !reason,
+            cost: { type: "staff+slot", value: staff.charges.value, slotRank, slotEntryName: entry.name },
+        };
+        options.push(reason ? { ...option, reason } : option);
+    }
+    return options;
 }
 
 /** Casting from a spontaneous (or flexible) caster's shared slots at a rank */

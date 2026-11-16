@@ -60,6 +60,8 @@
                 return cost.charges > 0
                     ? t("Cost.Staff", { charges: cost.charges, value: cost.value })
                     : t("Cost.StaffCantrip");
+            case "staff+slot":
+                return t("Cost.StaffSlot", { rank: cost.slotRank, entry: cost.slotEntryName, value: cost.value });
             case "overcharge":
                 return t(cost.destroys ? "Cost.OverchargeRepeat" : "Cost.Overcharge");
         }
@@ -78,6 +80,7 @@
         >
             <span class="source">
                 {#if option.kind === "wand-overcharge"}<i class="fa-solid fa-bolt"></i>{/if}
+                {#if option.kind === "staff+slot"}<i class="fa-solid fa-plus"></i>{/if}
                 {option.entryName}
             </span>
             <span class="cost">{costText(option)}</span>

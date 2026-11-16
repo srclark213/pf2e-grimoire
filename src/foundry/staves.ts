@@ -195,7 +195,7 @@ export function snapshotStaves(
 
 /**
  * Casts a spell from a staff the character prepared: spends charges equal to its rank on the staff
- * (cantrips are free), then posts the spell through the best entry without spending a slot.
+ * (cantrips are free), or 1 charge plus a spontaneous slot, then posts the spell through the best entry.
  * Warns, but still casts, when the staff isn't held.
  */
 export async function castFromStaff(
@@ -203,6 +203,8 @@ export async function castFromStaff(
     staffId: string,
     uuid: string,
     staffRank: number,
+    /** A spontaneous caster's slot spent with 1 charge instead of the full cost */
+    slot: { entryId: string; rank: number } | null = null,
 ): Promise<void> {
     const staff = carriedStaves(actor).find((s) => s.id === staffId);
     const spell = staff ? staffSpell(actor, staff, uuid, staffRank) : null;
@@ -211,7 +213,7 @@ export async function castFromStaff(
         return;
     }
     const data = readStaff(staff);
-    const charges = staffCost(staffRank);
+    const charges = slot ? 1 : staffCost(staffRank);
     if (data.preparedBy !== actor.id) {
         ui.notifications.warn(t("Reason.not-prepared"));
         return;
@@ -227,6 +229,16 @@ export async function castFromStaff(
     }
     if (!staff.isHeld) ui.notifications.warn(t("Staff.NotHeld"));
 
+    if (slot) {
+        const slotEntry = actor.items.get(slot.entryId);
+        const key = `slot${slot.rank as 1}` as const;
+        const left = slotEntry?.isOfType("spellcastingEntry") ? (slotEntry.system.slots[key]?.value ?? 0) : 0;
+        if (!slotEntry || left <= 0) {
+            ui.notifications.warn(t("Reason.no-slots", { rank: slot.rank }));
+            return;
+        }
+        await slotEntry.update({ [`system.slots.${key}.value`]: left - 1 });
+    }
     if (charges > 0) await writeStaff(staff, spendCharges(data, charges));
     spell.system.location.value = entry.id;
     await entry.cast(spell, { consume: false, rank: spell.rank });
