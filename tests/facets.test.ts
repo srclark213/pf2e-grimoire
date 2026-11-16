@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { extractFacets, linkedConditions, parseActions } from "../src/spellbook/facets.ts";
+import { categorize } from "../src/spellbook/categories.ts";
+import { extractFacets, inlineDamage, linkedConditions, parseActions } from "../src/spellbook/facets.ts";
 import { pf2eSpell } from "./fixtures/pf2e-spells.ts";
 
 describe("extractFacets on real pf2e spells", () => {
@@ -111,5 +112,34 @@ describe("linkedConditions", () => {
         const html =
             "@UUID[Compendium.pf2e.conditionitems.Item.Off-Guard] and @UUID[Compendium.pf2e.conditionitems.Item.Off-Guard]{off-guard}";
         expect(linkedConditions(html)).toEqual(["off-guard"]);
+    });
+
+    it("reads the ids a built compendium links by", () => {
+        const html =
+            "@UUID[Compendium.pf2e.conditionitems.Item.j91X7x0XSomq8d60]{Prone} and @UUID[Compendium.pf2e.conditionitems.Item.TkIyaNPgTZFBCCuh]{Dazzled}";
+        expect(linkedConditions(html)).toEqual(["prone", "dazzled"]);
+    });
+});
+
+describe("inlineDamage", () => {
+    it("reads damage types from nested @Damage formulas", () => {
+        const html =
+            "take @Damage[4d6[persistent,bleed]|options:area-damage] damage and @Damage[(2d6+4)[fire]] and @Damage[2d6[fire],1d4[cold]]";
+        expect(inlineDamage(html)).toEqual({ types: ["bleed", "fire", "cold"], heals: false });
+    });
+
+    it("spots inline healing", () => {
+        expect(inlineDamage("regain @Damage[2d8[healing]] Hit Points")).toEqual({ types: [], heals: true });
+    });
+});
+
+describe("categories from a built compendium's description", () => {
+    it("puts a spell that links conditions by id and rolls inline damage in Control and Damage", () => {
+        const facets = extractFacets({
+            description: {
+                value: "<p>@UUID[Compendium.pf2e.conditionitems.Item.j91X7x0XSomq8d60]{Prone}. They take @Damage[4d6[persistent,bleed]] damage.</p>",
+            },
+        });
+        expect(categorize(facets)).toEqual(["damage", "control"]);
     });
 });
