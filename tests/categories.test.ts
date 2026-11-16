@@ -36,6 +36,15 @@ describe("categorize real pf2e spells", () => {
         expect(categorize(facets).includes("defense")).toBe(isDefense);
     });
 
+    it.each([
+        ["granting it a +1 status bonus to attack rolls, Perception checks, saving throws, and skill checks", true],
+        ["You gain a +2 circumstance bonus to Athletics checks", true],
+        ["The target takes a –1 status penalty to attack rolls", false],
+    ])("Buff from the text %j → %s", (text, isBuff) => {
+        const facets = extractFacets({ description: { value: `<p>${text}</p>` } });
+        expect(categorize(facets).includes("buff")).toBe(isBuff);
+    });
+
     it("falls back to Utility", () => {
         expect(categorize(extractFacets({ traits: { value: ["concentrate", "manipulate"] } }))).toEqual(["utility"]);
     });

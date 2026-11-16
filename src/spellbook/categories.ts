@@ -77,8 +77,8 @@ export const CATEGORY_RULES: readonly CategoryRule[] = [
     },
     {
         category: "buff",
-        why: "links a helpful condition (invisible, quickened, concealed…)",
-        test: (f) => f.conditions.some((c) => HELPFUL_CONDITIONS.has(c)),
+        why: "links a helpful condition (invisible, quickened, concealed…), or text grants a status or circumstance bonus to attacks, damage, checks or Speed",
+        test: (f) => f.conditions.some((c) => HELPFUL_CONDITIONS.has(c)) || f.effects.includes("bonus"),
     },
     {
         category: "movement",

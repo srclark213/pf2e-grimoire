@@ -53,7 +53,7 @@ export interface SpellFacets {
  * Effects recognized from description wording. pf2e has no structured data for these,
  * so they are best-effort matches on the rules text.
  */
-export type SpellEffect = "protection" | "movement";
+export type SpellEffect = "protection" | "movement" | "bonus";
 
 const EFFECT_PATTERNS: Record<SpellEffect, RegExp> = {
     // "+1 circumstance bonus to AC", "bonus to saving throws", "resistance 5", "You ward a creature", "wards
@@ -63,6 +63,8 @@ const EFFECT_PATTERNS: Record<SpellEffect, RegExp> = {
         /bonus to (?:your |its |their )?(?:AC|Armor Class|saving throws|saves)|\bresistance (?:\d|equal|to)|\bwards? (?:(?:a|an|the|one|each) )?(?:creature|willing|ally|allies|yourself|you)\b|\bwards? against\b/i,
     // "a fly Speed", "climb Speed", "teleport", "transport yourself"
     movement: /\b(?:fly|climb|swim|burrow) Speed\b|\bteleport|\btransports? (?:yourself|you|the target)\b/i,
+    // "+1 status bonus to attack rolls, Perception checks…", "circumstance bonus to Athletics", "bonus to Speed"
+    bonus: /\b(?:status|circumstance) bonus (?:of \+?\d+ )?(?:to|on) (?:your |its |their |the target's |the creature's |all )?(?:attack|damage|Perception|skill|checks|Speeds?|Strikes|Athletics|Acrobatics|Stealth|Diplomacy|Deception|Intimidation)/i,
 };
 
 const SAVES = new Set(["fortitude", "reflex", "will"]);
