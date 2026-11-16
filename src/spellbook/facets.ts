@@ -56,9 +56,11 @@ export interface SpellFacets {
 export type SpellEffect = "protection" | "movement";
 
 const EFFECT_PATTERNS: Record<SpellEffect, RegExp> = {
-    // "+1 circumstance bonus to AC", "bonus to saving throws", "10 temporary Hit Points", "resistance 5", "ward"
+    // "+1 circumstance bonus to AC", "bonus to saving throws", "resistance 5", "You ward a creature", "wards
+    // against". Temporary Hit Points alone don't count: too many offensive spells and forms hand out a few.
+    // A bare "ward" doesn't either: "ward off the omen", "wards on a door", "Ward Domain".
     protection:
-        /bonus to (?:your |its |their )?(?:AC|Armor Class|saving throws|saves)|temporary Hit Points|\bresistance (?:\d|equal|to)|\bwards?\b/i,
+        /bonus to (?:your |its |their )?(?:AC|Armor Class|saving throws|saves)|\bresistance (?:\d|equal|to)|\bwards? (?:(?:a|an|the|one|each) )?(?:creature|willing|ally|allies|yourself|you)\b|\bwards? against\b/i,
     // "a fly Speed", "climb Speed", "teleport", "transport yourself"
     movement: /\b(?:fly|climb|swim|burrow) Speed\b|\bteleport|\btransports? (?:yourself|you|the target)\b/i,
 };

@@ -24,6 +24,18 @@ describe("categorize real pf2e spells", () => {
         expect(categoriesOf("rank-2/invisibility")).toContain("buff");
     });
 
+    it.each([
+        ["You ward a creature with protective energy", true],
+        ["This spell wards against those who attempt to subvert", true],
+        ["The target gains a +1 status bonus to saving throws", true],
+        ["The target can ward off the omen by spending 3 actions", false],
+        ["held fast by unseen magical wards", false],
+        ["Targets gain 5 temporary Hit Points and claws", false],
+    ])("Defense from the text %j → %s", (text, isDefense) => {
+        const facets = extractFacets({ description: { value: `<p>${text}</p>` } });
+        expect(categorize(facets).includes("defense")).toBe(isDefense);
+    });
+
     it("falls back to Utility", () => {
         expect(categorize(extractFacets({ traits: { value: ["concentrate", "manipulate"] } }))).toEqual(["utility"]);
     });

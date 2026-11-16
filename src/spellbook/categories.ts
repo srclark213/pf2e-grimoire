@@ -72,7 +72,7 @@ export const CATEGORY_RULES: readonly CategoryRule[] = [
     },
     {
         category: "defense",
-        why: "text grants a bonus to AC or saves, temporary Hit Points, resistance or a ward",
+        why: "text grants a bonus to AC or saves, resistance, or wards a creature (temporary Hit Points alone don't count)",
         test: (f) => f.effects.includes("protection"),
     },
     {
