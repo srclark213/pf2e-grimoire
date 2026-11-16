@@ -17,6 +17,8 @@ import { importLegacyStaves, legacyStaffEntries } from "../foundry/staves-import
 import { repairWand } from "../foundry/wands.ts";
 import { loadCollapsed, loadFilter, saveCollapsed, saveFilter } from "../foundry/filter-store.ts";
 import type { ChipGroup, FilterState } from "../spellbook/filter.ts";
+import { toggleSort, type OptionalColumn, type SortKey } from "../spellbook/table.ts";
+import { loadView, saveView, type TableView } from "../foundry/view-store.ts";
 import { snapshotActor } from "../foundry/snapshot.ts";
 import { aggregateSpells, groupByRank } from "../spellbook/aggregator.ts";
 import { cantripRank } from "../spellbook/labels.ts";
@@ -37,7 +39,7 @@ export class GrimoireApp extends ApplicationV2 {
     static override DEFAULT_OPTIONS: DeepPartial<fa.ApplicationConfiguration> = {
         classes: [MODULE_ID],
         window: { icon: "fa-solid fa-book-sparkles", resizable: true },
-        position: { width: 480, height: 640 },
+        position: { width: 720, height: 680 },
     };
 
     /** Opens the Grimoire for an actor, or brings its window forward if it is already open. */
@@ -70,6 +72,7 @@ export class GrimoireApp extends ApplicationV2 {
         this.actor = actor;
         this.#state.filter = loadFilter(actor.uuid);
         this.#state.collapsed = loadCollapsed();
+        this.#state.view = loadView();
     }
 
     override get title(): string {
@@ -97,6 +100,9 @@ export class GrimoireApp extends ApplicationV2 {
                     prepareStaff: (staffId: string) => prepareStaffFor(this.actor, staffId),
                     importLegacyStaves: () => importLegacyStaves(this.actor),
                     boostStaff: (staffId: string) => boostStaff(this.actor, staffId, this.#state.boost.slots),
+                    setSort: (key: SortKey) => this.#setView({ ...this.#state.view, sort: toggleSort(this.#state.view.sort, key) }),
+                    setColumn: (column: OptionalColumn, shown: boolean) =>
+                        this.#setView({ ...this.#state.view, columns: { ...this.#state.view.columns, [column]: shown } }),
                     staffEditor: {
                         save: (staffId: string, list: StaffSpellList) => setStaffSpells(this.actor, staffId, list),
                         reset: (staffId: string) => resetStaffSpells(this.actor, staffId),
@@ -154,6 +160,12 @@ export class GrimoireApp extends ApplicationV2 {
     #setFilter(filter: FilterState): void {
         this.#state.filter = filter;
         this.#saveFilterSoon();
+    }
+
+    /** Applies a new sort or column choice now and remembers it for every character. */
+    #setView(view: TableView): void {
+        this.#state.view = view;
+        void saveView(view);
     }
 
     /** Collapses or expands filter rows now and remembers the layout for every character. */

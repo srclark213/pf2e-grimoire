@@ -1,13 +1,14 @@
 <script lang="ts">
-    import type { CastOption, RankGroup } from "../spellbook/model.ts";
+    import type { CastOption } from "../spellbook/model.ts";
     import type { GrimoireState } from "./grimoire-state.svelte.ts";
     import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import type { RankButton } from "../spellbook/rank-buttons.ts";
-    import { availableChips, filterGroups, type ChipGroup, type FilterState } from "../spellbook/filter.ts";
+    import { availableChips, rowMatches, type ChipGroup, type FilterState } from "../spellbook/filter.ts";
+    import { sortRows, type OptionalColumn, type SortKey } from "../spellbook/table.ts";
     import FilterBar from "./FilterBar.svelte";
     import PrioritySettings from "./PrioritySettings.svelte";
     import SourceMenu from "./SourceMenu.svelte";
-    import SpellRowView from "./SpellRowView.svelte";
+    import SpellTable from "./SpellTable.svelte";
     import StaffBar from "./StaffBar.svelte";
     import type { StaffEditorActions } from "./StaffEditor.svelte";
 
@@ -24,13 +25,20 @@
         importLegacyStaves: () => Promise<void>;
         boostStaff: (staffId: string) => Promise<void>;
         staffEditor: StaffEditorActions;
+        setSort: (key: SortKey) => void;
+        setColumn: (column: OptionalColumn, shown: boolean) => void;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff, staffEditor }: Props = $props();
+    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff, staffEditor, setSort, setColumn }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
-    const visibleGroups = $derived(filterGroups(grimoire.groups, grimoire.filter));
-    const shownCount = $derived(visibleGroups.reduce((n, g) => n + g.rows.length, 0));
+    const visibleRows = $derived(
+        sortRows(
+            allRows.filter((row) => rowMatches(row, grimoire.filter)),
+            grimoire.view.sort,
+        ),
+    );
+    const shownCount = $derived(visibleRows.length);
     const chips = $derived(availableChips(allRows, grimoire.filter.chips));
 
     let showSettings = $state(false);
@@ -52,15 +60,7 @@
         await cast(option);
     }
 
-    const spellCount = $derived(grimoire.groups.reduce((n, g) => n + g.rows.length, 0));
-
-    function rankLabel(group: RankGroup): string {
-        if (group.rank > 0) return game.i18n.localize("PF2EGrimoire.Rank", { rank: group.rank });
-        const hasFocus = group.rows.some((r) => r.isFocus);
-        const hasCantrips = group.rows.some((r) => r.isCantrip && !r.isFocus);
-        const key = hasFocus && hasCantrips ? "CantripsAndFocus" : hasFocus ? "FocusAtRank" : "CantripsAtRank";
-        return game.i18n.localize(`PF2EGrimoire.${key}`, { rank: grimoire.cantripRank });
-    }
+    const spellCount = $derived(allRows.length);
 </script>
 
 <div class="grimoire" bind:this={root}>
@@ -116,37 +116,33 @@
             shown={shownCount}
             total={spellCount}
             collapsed={grimoire.collapsed}
+            columns={grimoire.view.columns}
             {setFilter}
             {setCollapsed}
+            {setColumn}
         />
     {/if}
 
     <div class="groups">
-        {#each visibleGroups as group (group.rank)}
-            <section>
-                <h3>
-                    <span>{rankLabel(group)}</span>
-                    <span class="count">{group.rows.length}</span>
-                </h3>
-                <ul>
-                    {#each group.rows as row (row.key)}
-                        <SpellRowView
-                            {row}
-                            priority={grimoire.priority}
-                            {openSpell}
-                            {cast}
-                            {openMenu}
-                            {setTags}
-                            knownTags={chips.tag}
-                        />
-                    {/each}
-                </ul>
-            </section>
+        {#if visibleRows.length > 0}
+            <SpellTable
+                rows={visibleRows}
+                {allRows}
+                priority={grimoire.priority}
+                sort={grimoire.view.sort}
+                columns={grimoire.view.columns}
+                {setSort}
+                {openSpell}
+                {cast}
+                {openMenu}
+                {setTags}
+                knownTags={chips.tag}
+            />
         {:else}
             <p class="empty">
                 {game.i18n.localize(allRows.length > 0 ? "PF2EGrimoire.Filter.NoMatches" : "PF2EGrimoire.NoSpells")}
             </p>
-        {/each}
+        {/if}
     </div>
 
     {#if menu}
@@ -213,25 +209,6 @@
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        padding-top: 0.25rem;
-    }
-    h3 {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin: 0.6rem 0 0.2rem;
-        padding: 0 0.25rem 0.1rem;
-        border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-        font-size: 1rem;
-    }
-    .count {
-        font-size: 0.75rem;
-        opacity: 0.6;
-    }
-    ul {
-        margin: 0;
-        padding: 0;
-        list-style: none;
     }
     .empty {
         opacity: 0.7;

@@ -3,26 +3,35 @@
         CHIP_GROUPS,
         chipId,
         isEmptyFilter,
+        parseChip,
         toggleChip,
         toggleCollapsed,
         type ChipGroup,
+        type ChipId,
         type FilterState,
     } from "../spellbook/filter.ts";
+    import type { ColumnState, OptionalColumn } from "../spellbook/table.ts";
 
     interface Props {
         filter: FilterState;
         chips: Record<ChipGroup, string[]>;
         shown: number;
         total: number;
-        /** Rows showing only their selected chips */
+        /** Rows in the filter panel showing only their selected chips */
         collapsed: ChipGroup[];
+        columns: ColumnState;
         setFilter: (filter: FilterState) => void;
         setCollapsed: (collapsed: ChipGroup[]) => void;
+        setColumn: (column: OptionalColumn, shown: boolean) => void;
     }
 
-    const { filter, chips, shown, total, collapsed, setFilter, setCollapsed }: Props = $props();
+    const { filter, chips, shown, total, collapsed, columns, setFilter, setCollapsed, setColumn }: Props = $props();
 
     const t = (key: string, data?: Record<string, unknown>) => game.i18n.localize(`PF2EGrimoire.${key}`, data);
+
+    /** Which dropdown is open under the toolbar */
+    let open: "filters" | "columns" | null = $state(null);
+    const toggle = (panel: "filters" | "columns") => (open = open === panel ? null : panel);
 
     /** Localizes a pf2e config label if pf2e has one, otherwise title-cases the slug. */
     function pf2eLabel(table: Record<string, string> | undefined, value: string): string {
@@ -56,7 +65,6 @@
     }
 
     const groups = $derived(CHIP_GROUPS.filter((g) => chips[g].length > 0));
-    const allCollapsed = $derived(groups.every((g) => collapsed.includes(g)));
 
     /** The chips a row shows: all of them when open, only the selected ones when collapsed. */
     function shownValues(group: ChipGroup): string[] {
@@ -64,13 +72,19 @@
         return chips[group].filter((value) => filter.chips.includes(chipId(group, value)));
     }
 
-    function toggleAll(): void {
-        setCollapsed(allCollapsed ? [] : [...CHIP_GROUPS]);
-    }
+    const active = $derived(filter.chips.map((id) => ({ id, ...parseChip(id) })));
 </script>
 
+{#snippet chipContent(group: ChipGroup, value: string)}
+    {#if group === "action" && ACTION_GLYPHS[value]}
+        <span class="action-glyph">{ACTION_GLYPHS[value]}</span>
+    {:else}
+        {label(group, value)}
+    {/if}
+{/snippet}
+
 <div class="filter-bar">
-    <div class="search-row">
+    <div class="toolbar">
         <input
             type="search"
             placeholder={t("Filter.Search")}
@@ -81,7 +95,28 @@
         <span class="count">{t("Filter.Count", { shown, total })}</span>
         <button
             type="button"
-            class="clear"
+            class="tool"
+            class:active={open === "filters"}
+            aria-expanded={open === "filters"}
+            onclick={() => toggle("filters")}
+        >
+            <i class="fa-solid fa-filter"></i>
+            {filter.chips.length > 0 ? t("Filter.ButtonCount", { count: filter.chips.length }) : t("Filter.Button")}
+        </button>
+        <button
+            type="button"
+            class="tool icon"
+            class:active={open === "columns"}
+            aria-expanded={open === "columns"}
+            aria-label={t("Table.Columns")}
+            data-tooltip={t("Table.Columns")}
+            onclick={() => toggle("columns")}
+        >
+            <i class="fa-solid fa-table-columns"></i>
+        </button>
+        <button
+            type="button"
+            class="tool icon"
             disabled={isEmptyFilter(filter)}
             data-tooltip={t("Filter.Clear")}
             aria-label={t("Filter.Clear")}
@@ -89,75 +124,106 @@
         >
             <i class="fa-solid fa-filter-circle-xmark"></i>
         </button>
-        {#if groups.length > 0}
-            <button
-                type="button"
-                class="clear"
-                data-tooltip={t(allCollapsed ? "Filter.ExpandAll" : "Filter.CollapseAll")}
-                aria-label={t(allCollapsed ? "Filter.ExpandAll" : "Filter.CollapseAll")}
-                onclick={toggleAll}
-            >
-                <i class={allCollapsed ? "fa-solid fa-angles-down" : "fa-solid fa-angles-up"}></i>
-            </button>
-        {/if}
     </div>
 
-    {#each groups as group (group)}
-        {@const isCollapsed = collapsed.includes(group)}
-        {@const values = shownValues(group)}
-        {@const groupName = t(`Filter.Group.${group}`)}
-        <div class="chip-row" class:collapsed={isCollapsed}>
-            <button
-                type="button"
-                class="group-label"
-                aria-expanded={!isCollapsed}
-                data-tooltip={t(isCollapsed ? "Filter.Expand" : "Filter.Collapse", { group: groupName })}
-                onclick={() => setCollapsed(toggleCollapsed(collapsed, group))}
-            >
-                <i class={isCollapsed ? "fa-solid fa-caret-right" : "fa-solid fa-caret-down"}></i>
-                {groupName}
-            </button>
-            <div class="chips">
-                {#each values as value (value)}
-                    {@const id = chipId(group, value)}
+    {#if active.length > 0}
+        <div class="active">
+            {#each active as chip (chip.id)}
+                <button
+                    type="button"
+                    class="chip on"
+                    aria-label={t("Filter.Remove")}
+                    data-tooltip={t("Filter.Remove")}
+                    onclick={() => setFilter(toggleChip(filter, chip.id as ChipId))}
+                >
+                    {@render chipContent(chip.group, chip.value)}
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            {/each}
+        </div>
+    {/if}
+
+    {#if open === "columns"}
+        <div class="panel columns">
+            <label>
+                <input
+                    type="checkbox"
+                    checked={columns.rank}
+                    onchange={(event) => setColumn("rank", event.currentTarget.checked)}
+                />
+                {t("Table.ShowRank")}
+            </label>
+            <label>
+                <input
+                    type="checkbox"
+                    checked={columns.from}
+                    onchange={(event) => setColumn("from", event.currentTarget.checked)}
+                />
+                {t("Table.ShowFrom")}
+            </label>
+        </div>
+    {/if}
+
+    {#if open === "filters"}
+        <div class="panel">
+            {#each groups as group (group)}
+                {@const isCollapsed = collapsed.includes(group)}
+                {@const values = shownValues(group)}
+                {@const groupName = t(`Filter.Group.${group}`)}
+                <div class="chip-row">
                     <button
                         type="button"
-                        class="chip"
-                        class:on={filter.chips.includes(id)}
-                        aria-pressed={filter.chips.includes(id)}
-                        data-group={group}
-                        data-tooltip={tooltip(group, value)}
-                        onclick={() => setFilter(toggleChip(filter, id))}
+                        class="group-label"
+                        aria-expanded={!isCollapsed}
+                        data-tooltip={t(isCollapsed ? "Filter.Expand" : "Filter.Collapse", { group: groupName })}
+                        onclick={() => setCollapsed(toggleCollapsed(collapsed, group))}
                     >
-                        {#if group === "action" && ACTION_GLYPHS[value]}
-                            <span class="action-glyph">{ACTION_GLYPHS[value]}</span>
-                        {:else}
-                            {label(group, value)}
+                        <i class={isCollapsed ? "fa-solid fa-caret-right" : "fa-solid fa-caret-down"}></i>
+                        {groupName}
+                    </button>
+                    <div class="chips">
+                        {#each values as value (value)}
+                            {@const id = chipId(group, value)}
+                            <button
+                                type="button"
+                                class="chip"
+                                class:on={filter.chips.includes(id)}
+                                aria-pressed={filter.chips.includes(id)}
+                                data-tooltip={tooltip(group, value)}
+                                onclick={() => setFilter(toggleChip(filter, id))}
+                            >
+                                {@render chipContent(group, value)}
+                            </button>
+                        {/each}
+                        {#if isCollapsed && chips[group].length > values.length}
+                            <button
+                                type="button"
+                                class="more"
+                                onclick={() => setCollapsed(toggleCollapsed(collapsed, group))}
+                            >
+                                {t("Filter.HiddenCount", { count: chips[group].length - values.length })}
+                            </button>
                         {/if}
-                    </button>
-                {/each}
-                {#if isCollapsed && chips[group].length > values.length}
-                    <button type="button" class="more" onclick={() => setCollapsed(toggleCollapsed(collapsed, group))}>
-                        {t("Filter.HiddenCount", { count: chips[group].length - values.length })}
-                    </button>
-                {/if}
-            </div>
+                    </div>
+                </div>
+            {/each}
         </div>
-    {/each}
+    {/if}
 </div>
 
 <style>
     .filter-bar {
+        position: relative;
         display: flex;
         flex-direction: column;
         gap: 0.3rem;
         padding: 0.4rem 0.25rem;
         border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
     }
-    .search-row {
+    .toolbar {
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.35rem;
     }
     input[type="search"] {
         flex: 1;
@@ -169,22 +235,58 @@
         opacity: 0.7;
         white-space: nowrap;
     }
-    .clear {
+    .tool {
         all: unset;
-        width: 1.6rem;
-        height: 1.6rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        height: 1.7rem;
+        padding: 0 0.5rem;
+        border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
         border-radius: 4px;
-        text-align: center;
-        line-height: 1.6rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
         cursor: pointer;
     }
-    .clear:hover:not(:disabled),
-    .clear:focus-visible {
+    .tool.icon {
+        justify-content: center;
+        width: 1.7rem;
+        padding: 0;
+        border-color: transparent;
+    }
+    .tool:hover:not(:disabled),
+    .tool:focus-visible,
+    .tool.active {
         background: color-mix(in srgb, currentColor 15%, transparent);
     }
-    .clear:disabled {
+    .tool:disabled {
         opacity: 0.3;
         cursor: default;
+    }
+    .active {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    .panel {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        padding: 0.4rem;
+        border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+        border-radius: 4px;
+        max-height: 14rem;
+        overflow-y: auto;
+    }
+    .panel.columns {
+        flex-direction: row;
+        gap: 1rem;
+        font-size: 0.8rem;
+    }
+    .panel.columns label {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
     }
     .chip-row {
         display: flex;
@@ -216,6 +318,9 @@
     }
     .chip {
         all: unset;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
         padding: 0 0.5rem;
         border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
         border-radius: 999px;
@@ -232,6 +337,9 @@
         border-color: #c7892b;
         background: color-mix(in srgb, #c7892b 35%, transparent);
         font-weight: bold;
+    }
+    .chip i {
+        font-size: 0.65rem;
     }
     .chip .action-glyph {
         font-size: 0.9rem;

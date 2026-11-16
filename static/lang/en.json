@@ -146,7 +146,13 @@
             "fortitude": "Fortitude",
             "reflex": "Reflex",
             "will": "Will",
-            "ac": "Attack (AC)"
+            "ac": "Attack (AC)",
+            "Short": {
+                "fortitude": "Fort",
+                "reflex": "Ref",
+                "will": "Will",
+                "ac": "AC"
+            }
         },
         "Action": {
             "1": "1 action",
@@ -184,17 +190,32 @@
                 "category": "Category",
                 "trait": "Traits",
                 "tag": "Tags"
-            }
+            },
+            "Button": "Filters",
+            "ButtonCount": "Filters ({count})",
+            "Remove": "Remove this filter"
         },
         "Settings": {
             "Filters": "Remembered Grimoire filters",
-            "CollapsedRows": "Collapsed Grimoire filter rows"
+            "CollapsedRows": "Collapsed Grimoire filter rows",
+            "TableView": "Grimoire table sort and columns"
         },
         "Tags": {
             "Edit": "Edit tags",
             "Add": "Add a tag and press Enter",
             "Remove": "Remove tag {tag}",
             "Done": "Done"
+        },
+        "Table": {
+            "Rank": "Rk",
+            "RankHint": "Base rank: C for cantrips, F for focus spells",
+            "Spell": "Spell",
+            "Save": "Save",
+            "CastHint": "Cast at rank: click a button to cast, right-click for every source",
+            "From": "From",
+            "Columns": "Columns",
+            "ShowRank": "Base rank",
+            "ShowFrom": "From (sources)"
         }
     }
 }

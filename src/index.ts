@@ -1,6 +1,7 @@
 import "./styles/grimoire.css";
 import { MODULE_ID } from "./constants.ts";
 import { registerCollapsedSetting, registerFilterSetting } from "./foundry/filter-store.ts";
+import { registerViewSetting } from "./foundry/view-store.ts";
 import { registerRestHook } from "./foundry/wands.ts";
 import { openGrimoire, registerKeybinding, registerSheetButton } from "./launchers.ts";
 
@@ -11,6 +12,7 @@ Hooks.once("init", () => {
     }
     registerFilterSetting();
     registerCollapsedSetting();
+    registerViewSetting();
     registerKeybinding();
     registerSheetButton();
     registerRestHook();
