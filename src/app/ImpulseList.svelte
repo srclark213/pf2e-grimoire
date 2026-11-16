@@ -1,14 +1,17 @@
 <script lang="ts">
-    import { SECTIONS, plainText, type Block, type ImpulseRow, type Warning } from "../kinetic/impulses.ts";
+    import { SECTIONS, type Block, type ImpulseRow, type Warning } from "../kinetic/impulses.ts";
+    import { readableText, type RollDataLookup } from "../kinetic/summary.ts";
     import type { KineticActions } from "./kinetic-state.svelte.ts";
     import { ELEMENT_ICONS, costGlyph, elementLabel, t } from "./kinetic-ui.ts";
 
     interface Props {
         rows: ImpulseRow[];
+        /** Resolves inline rolls in descriptions */
+        lookup: RollDataLookup;
         actions: KineticActions;
     }
 
-    const { rows, actions }: Props = $props();
+    const { rows, lookup, actions }: Props = $props();
 
     const sections = $derived(
         SECTIONS.map((section) => ({ section, rows: rows.filter((r) => r.section === section) })).filter(
@@ -128,7 +131,7 @@
                             {#each row.warnings as warning (warning.key)}
                                 <p class="warning-line"><i class="fa-solid fa-triangle-exclamation"></i> {warningText(warning)}</p>
                             {/each}
-                            <p>{plainText(row.item.description)}</p>
+                            <p>{readableText(row.item.description, lookup)}</p>
                         </div>
                     {/if}
                 </li>

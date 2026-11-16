@@ -46,7 +46,8 @@ function saveLabel(args: string): string {
 function templateLabel(args: string): string | null {
     const parts = Object.fromEntries(
         args.split("|").map((part, index) => {
-            const [key, value] = part.includes(":") ? part.split(":") : [index === 0 ? "type" : part, ""];
+            // "burst|distance:20" names the shape first, without a "type:" key.
+            const [key, value] = part.includes(":") ? part.split(":") : index === 0 ? ["type", part] : [part, ""];
             return [key!, value!];
         }),
     );
@@ -54,22 +55,93 @@ function templateLabel(args: string): string | null {
     return `${parts.distance}-foot ${parts.type}`;
 }
 
+interface InlineTag {
+    tag: string;
+    args: string;
+    label: string | null;
+    /** Where the tag starts, and the index just past it (its {label} included) */
+    start: number;
+    end: number;
+}
+
 /** Every `@Tag[args]{label}` in the text. Brackets nest, so this walks them rather than using a regex. */
-function inlineArgs(html: string, tag: string): { args: string; label: string | null }[] {
-    const found: { args: string; label: string | null }[] = [];
-    const open = `${tag}[`;
-    for (let start = html.indexOf(open); start !== -1; start = html.indexOf(open, start + 1)) {
+function inlineTags(html: string): InlineTag[] {
+    const found: InlineTag[] = [];
+    const pattern = /@(\w+)\[/g;
+    for (let match = pattern.exec(html); match; match = pattern.exec(html)) {
+        const start = match.index;
         let depth = 0;
-        let end = start + tag.length;
-        for (; end < html.length; end++) {
-            if (html[end] === "[") depth++;
-            else if (html[end] === "]" && --depth === 0) break;
+        let close = start + match[0].length - 1;
+        for (; close < html.length; close++) {
+            if (html[close] === "[") depth++;
+            else if (html[close] === "]" && --depth === 0) break;
         }
-        const args = html.slice(start + open.length, end);
-        const label = html[end + 1] === "{" ? html.slice(end + 2, html.indexOf("}", end + 2)) : null;
-        found.push({ args, label: label || null });
+        const args = html.slice(start + match[0].length, close);
+        let end = close + 1;
+        let label: string | null = null;
+        if (html[end] === "{") {
+            const labelEnd = html.indexOf("}", end);
+            if (labelEnd !== -1) {
+                label = html.slice(end + 1, labelEnd) || null;
+                end = labelEnd + 1;
+            }
+        }
+        found.push({ tag: match[1]!, args, label, start, end });
+        pattern.lastIndex = end;
     }
     return found;
+}
+
+function inlineArgs(html: string, tag: string): { args: string; label: string | null }[] {
+    const name = tag.replace(/^@/, "");
+    return inlineTags(html).filter((t) => t.tag === name);
+}
+
+function capitalize(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** How an inline tag reads in a sentence: its label, or a resolved roll, check or area */
+function readTag(tag: InlineTag, lookup: RollDataLookup): string {
+    if (tag.label) return tag.label;
+    switch (tag.tag) {
+        case "Damage":
+            return resolveFormula(tag.args.split("|")[0]!, lookup);
+        case "Check": {
+            const [statistic = "", ...options] = tag.args.split("|");
+            const label = SAVE_LABELS[statistic] ?? capitalize(statistic.replaceAll("-", " "));
+            return options.includes("basic") ? `basic ${label}` : label;
+        }
+        case "Template":
+            return templateLabel(tag.args) ?? "";
+        case "UUID":
+            // pf2e source data links by name (…Item.Elemental Blast); the built compendium always has a label.
+            return /\.Item\.([^.]+)$/.exec(tag.args)?.[1] ?? "";
+        default:
+            return "";
+    }
+}
+
+/**
+ * An impulse's description as readable plain text: HTML stripped, and inline rolls written out the way the sheet
+ * shows them ("@Damage[(floor((@actor.level -8)/3)+3)d12[electricity]]" becomes "5d12 electricity" at level 14).
+ */
+export function readableText(html: string, lookup: RollDataLookup): string {
+    let text = "";
+    let at = 0;
+    for (const tag of inlineTags(html)) {
+        text += html.slice(at, tag.start) + readTag(tag, lookup);
+        at = tag.end;
+    }
+    text += html.slice(at);
+    return text
+        .replace(/<\/(p|li|h\d)>/g, "$& ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/\s+([.,;:])/g, "$1")
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
 /**
@@ -107,6 +179,7 @@ export function resolveFormula(formula: string, lookup: RollDataLookup): string 
         .replace(/\[\]/g, "")
         .replace(/\[([^\]]+)\]/g, (_match, tags: string) => ` ${tags.split(",").join(" ")}`)
         .replace(/[()]/g, "")
+        .replace(/\s*,\s*/g, ", ")
         .replace(/\s*\+\s*/g, " + ")
         .replace(/\s+/g, " ")
         .trim();

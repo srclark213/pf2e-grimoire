@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import type { ReflowStatus } from "../foundry/reflow.ts";
-    import { elementsOf, plainText } from "../kinetic/impulses.ts";
+    import { elementsOf } from "../kinetic/impulses.ts";
     import {
         buildCatalog,
         filterCatalog,
@@ -11,7 +11,7 @@
         type CatalogImpulse,
         type OwnedImpulse,
     } from "../kinetic/reflow.ts";
-    import { levelLookup, summarizeImpulse, type RollDataLookup } from "../kinetic/summary.ts";
+    import { levelLookup, readableText, summarizeImpulse, type RollDataLookup } from "../kinetic/summary.ts";
     import type { KineticActions } from "./kinetic-state.svelte.ts";
     import { ELEMENT_ICONS, costGlyph, elementLabel, t } from "./kinetic-ui.ts";
 
@@ -243,7 +243,7 @@
                         </div>
                         {#if line}<div class="summary">{line}</div>{/if}
                         {#if expanded === entry.impulse.uuid}
-                            <p class="details">{plainText(entry.impulse.description)}</p>
+                            <p class="details">{readableText(entry.impulse.description, summaryLookup)}</p>
                         {/if}
                     </li>
                 {/each}

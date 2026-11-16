@@ -2,6 +2,7 @@
     import { blastStatus, impulseRows, infusionTarget } from "../kinetic/impulses.ts";
     import { channelRiderOpen, liveInfusion, overflowUsed } from "../kinetic/state.ts";
     import BlastPanel from "./BlastPanel.svelte";
+    import { levelLookup } from "../kinetic/summary.ts";
     import ImpulseList from "./ImpulseList.svelte";
     import ManageImpulses from "./ManageImpulses.svelte";
     import type { KineticActions, KineticState } from "./kinetic-state.svelte.ts";
@@ -237,7 +238,7 @@
                 </section>
             {/if}
 
-            <ImpulseList {rows} {actions} />
+            <ImpulseList {rows} lookup={kinetic.lookup ?? levelLookup(snapshot.level)} {actions} />
         </div>
         {/if}
     </div>

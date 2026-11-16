@@ -6,7 +6,7 @@ import { blastStatus, impulseRows, infusionTarget, plainText } from "../src/kine
 import type { ActionCost, KineticItemSnapshot, KineticSnapshot, KineticState } from "../src/kinetic/model.ts";
 import { EMPTY_STATE } from "../src/kinetic/model.ts";
 import { applyUse, liveInfusion, normalizeState, overflowUsed, type UsedItem } from "../src/kinetic/state.ts";
-import { levelLookup, resolveFormula, summarizeImpulse } from "../src/kinetic/summary.ts";
+import { levelLookup, readableText, resolveFormula, summarizeImpulse } from "../src/kinetic/summary.ts";
 
 const KINETICIST = fileURLToPath(new URL("../vendor/pf2e/packs/pf2e/feats/class/kineticist/", import.meta.url));
 const ACTIONS = fileURLToPath(new URL("../vendor/pf2e/packs/pf2e/actions/class/kineticist/", import.meta.url));
@@ -304,5 +304,37 @@ describe("impulseRows", () => {
         expect(rows.filter((r) => r.highlight === "channel").map((r) => r.item.name)).toEqual(["Winter Sleet"]);
         expect(blastStatus(snapshot({ state })).channel).toBe("needs-one-action");
         expect(blastStatus(snapshot({ state, blast: { itemId: "b", cost: 1, configs: [] } })).channel).toBe("free");
+    });
+});
+
+describe("readableText", () => {
+    it("Storm Spiral reads like the sheet at level 14", () => {
+        const text = readableText(source("Storm Spiral").system.description.value, levelLookup(14));
+        expect(text).toContain("The storm appears in a 20-foot burst within 60 feet.");
+        expect(text).toContain("takes 5d12 electricity, 1d10 sonic damage, with a basic Reflex save against your class DC.");
+        expect(text).toContain("is Deafened until");
+    });
+
+    it("summaries separate damage types with a comma and space", () => {
+        expect(summarizeImpulse(source("Storm Spiral").system.description.value, levelLookup(14)).damage).toEqual([
+            "5d12 electricity, 1d10 sonic",
+        ]);
+    });
+
+    it("keeps labels, and names skill checks", () => {
+        expect(readableText("<p>a @UUID[Compendium.pf2e.x.Item.abc]{Slowed 1} creature</p>", levelLookup(1))).toBe(
+            "a Slowed 1 creature",
+        );
+        expect(readableText("an @Check[acrobatics|against:kineticist|adjustment:-2] check", levelLookup(1))).toBe(
+            "an Acrobatics check",
+        );
+    });
+
+    it("leaves no inline-roll syntax in any impulse or infusion", () => {
+        const kinetic = SOURCES.filter((s) => s.system.traits.value.some((t) => t === "impulse" || t === "infusion"));
+        for (const item of kinetic) {
+            const text = readableText(item.system.description.value, levelLookup(14));
+            expect(text, item.name).not.toMatch(/@[A-Z]\w*\[|@actor|<\w/);
+        }
     });
 });
