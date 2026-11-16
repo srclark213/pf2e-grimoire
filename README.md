@@ -2,8 +2,6 @@
 
 A Foundry VTT v14 module for the Pathfinder 2e system (8.7.x). It adds a separate spellbook window that shows every spell from every spellcasting entry, staff, wand and scroll in one filterable list.
 
-The spec and plan are in [`planning/`](planning/), an Obsidian vault. Tasks are tracked on the Notion board.
-
 ## Development
 
 You need Node 22 or later and git.

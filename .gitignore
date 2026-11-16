@@ -6,3 +6,6 @@ foundry.config.json
 coverage/
 planning/.obsidian/workspace*.json
 .claude/settings.local.json
+
+# Planning vault (Obsidian): kept locally, not published
+planning/
