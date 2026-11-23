@@ -2,7 +2,7 @@
     "id": "pf2e-grimoire",
     "title": "PF2e Grimoire",
     "description": "A unified, filterable spellbook window for Pathfinder 2e: every spell from every spellcasting entry, staff, wand and scroll in one list. Kineticists also get the Kinetic Gate dashboard for their aura, blasts, infusions and impulses.",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "compatibility": {
         "minimum": "14",
         "verified": "14.369",
@@ -36,5 +36,5 @@
     },
     "url": "https://github.com/srclark213/pf2e-grimoire",
     "manifest": "https://github.com/srclark213/pf2e-grimoire/releases/latest/download/module.json",
-    "download": "https://github.com/srclark213/pf2e-grimoire/releases/download/v0.2.0/module.zip"
+    "download": "https://github.com/srclark213/pf2e-grimoire/releases/download/v0.2.1/module.zip"
 }
