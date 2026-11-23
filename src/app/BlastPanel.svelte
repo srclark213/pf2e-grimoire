@@ -31,7 +31,18 @@
 
 <section class="blasts" class:dormant class:infused={status.infused}>
     <header>
-        <h3>{t("Blast.Header")}</h3>
+        <h3>
+            {t("Blast.Header")}
+            <button
+                type="button"
+                class="share"
+                aria-label={t("Share")}
+                data-tooltip={t("Share")}
+                onclick={() => run(() => actions.share(blast.itemId))}
+            >
+                <i class="fa-solid fa-comment"></i>
+            </button>
+        </h3>
         <div class="cost" role="radiogroup" aria-label={t("Blast.Cost")}>
             {#each [1, 2] as const as cost (cost)}
                 <button
@@ -169,6 +180,17 @@
         letter-spacing: 0.04em;
         opacity: 0.75;
         border: none;
+    }
+    .share {
+        all: unset;
+        margin-left: 0.3rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        opacity: 0.6;
+    }
+    .share:hover,
+    .share:focus-visible {
+        opacity: 1;
     }
     .cost,
     .types {

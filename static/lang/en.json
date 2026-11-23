@@ -382,7 +382,9 @@
                 "ConfirmNoneLeft": "You've used today's reflows. Replace {old} with {new} anyway, for example to retrain?",
                 "NotFound": "That impulse is no longer in the compendium.",
                 "Swapped": "Reflowed {old} into {new}."
-            }
-        }
+            },
+            "Share": "Send to chat (doesn't use it)"
+        },
+        "Share": "Send to chat (doesn't cast or spend anything)"
     }
 }

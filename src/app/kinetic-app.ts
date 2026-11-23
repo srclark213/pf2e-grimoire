@@ -13,6 +13,7 @@ import {
     setBlastDamageType,
     useKineticItem,
 } from "../foundry/kinetic.ts";
+import { shareItem, shareUuid } from "../foundry/share.ts";
 import { rollDataLookup, snapshotKineticist } from "../foundry/kinetic-snapshot.ts";
 import { loadImpulseCatalog, ownedImpulses, reflowImpulse, reflowStatus } from "../foundry/reflow.ts";
 import Kinetic from "./Kinetic.svelte";
@@ -74,6 +75,8 @@ export class KineticApp extends ApplicationV2 {
         const actor = this.actor;
         const actions: KineticActions = {
             use: (itemId, event) => useKineticItem(actor, itemId, event),
+            share: (itemId) => shareItem(actor, itemId),
+            shareUuid: (uuid) => shareUuid(actor, uuid),
             openItem: (itemId) => void actor.items.get(itemId)?.sheet.render(true),
             dismissAura: async () => void (await deactivateAura(actor)),
             removeEffect: (effectId) => removeEffect(actor, effectId),

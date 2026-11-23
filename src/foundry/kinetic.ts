@@ -5,6 +5,7 @@ import { MODULE_ID } from "../constants.ts";
 import { infusionTarget } from "../kinetic/impulses.ts";
 import type { ActionCost, KineticState } from "../kinetic/model.ts";
 import { applyUse, normalizeState, type Notice, type UsedItem } from "../kinetic/state.ts";
+import { isShared } from "./share.ts";
 import { AURA_SLUG, combatStamp, costOf, isKineticist, kineticEffects, type AbilityLike } from "./kinetic-snapshot.ts";
 
 const AUTOMATION = "kineticAutomation";
@@ -252,7 +253,7 @@ function noticeText(notice: Notice): string {
 export function registerKineticHooks(): void {
     Hooks.on("createChatMessage", (...args: unknown[]) => {
         const message = args[0] as ChatMessagePF2e;
-        if (message.author?.id !== game.user.id || !automationOn()) return;
+        if (message.author?.id !== game.user.id || !automationOn() || isShared(message)) return;
         const actor = message.actor;
         if (!isKineticist(actor) || !actor.isOwner) return;
         const used = classifyMessage(message, actor);

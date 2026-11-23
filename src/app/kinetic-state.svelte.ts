@@ -18,6 +18,9 @@ export class KineticState {
 /** What the dashboard can ask the app to do */
 export interface KineticActions {
     use: (itemId: string, event: Event) => Promise<void>;
+    /** Posts the card to chat without using it */
+    share: (itemId: string) => Promise<void>;
+    shareUuid: (uuid: string) => Promise<void>;
     openItem: (itemId: string) => void;
     dismissAura: () => Promise<void>;
     removeEffect: (effectId: string) => Promise<void>;

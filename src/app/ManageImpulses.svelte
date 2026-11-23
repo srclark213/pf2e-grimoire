@@ -124,6 +124,15 @@
                         {/each}
                     </span>
                     <span class="spacer"></span>
+                    <button
+                        type="button"
+                        class="expand"
+                        aria-label={t("Share")}
+                        data-tooltip={t("Share")}
+                        onclick={() => actions.share(impulse.id)}
+                    >
+                        <i class="fa-solid fa-comment"></i>
+                    </button>
                     <span class="slot" data-tooltip={t("Manage.SlotHint", { level: impulse.slotLevel })}>
                         {impulse.slotLabel}
                     </span>
@@ -226,6 +235,15 @@
                             {#if entry.owned}
                                 <span class="have"><i class="fa-solid fa-check"></i> {t("Manage.Owned")}</span>
                             {/if}
+                            <button
+                                type="button"
+                                class="expand"
+                                aria-label={t("Share")}
+                                data-tooltip={t("Share")}
+                                onclick={() => actions.shareUuid(entry.impulse.uuid)}
+                            >
+                                <i class="fa-solid fa-comment"></i>
+                            </button>
                             <button
                                 type="button"
                                 class="expand"

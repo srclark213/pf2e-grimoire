@@ -104,6 +104,15 @@
                         <button
                             type="button"
                             class="expand"
+                            aria-label={t("Share")}
+                            data-tooltip={t("Share")}
+                            onclick={() => actions.share(row.item.id)}
+                        >
+                            <i class="fa-solid fa-comment"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="expand"
                             aria-expanded={expanded === row.item.id}
                             aria-label={t("Impulse.Details")}
                             onclick={() => (expanded = expanded === row.item.id ? null : row.item.id)}

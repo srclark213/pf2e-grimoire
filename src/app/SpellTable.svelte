@@ -29,6 +29,7 @@
         collapsed: string[];
         toggleSection: (key: string) => void;
         openSpell: (spellId: string) => void;
+        shareSpell: (row: SpellRow) => Promise<void>;
         cast: (option: CastOption) => Promise<void>;
         openMenu: (event: MouseEvent, button: RankButton) => void;
         setTags: (spellIds: string[], tags: string[]) => Promise<void>;
@@ -47,6 +48,7 @@
         collapsed,
         toggleSection,
         openSpell,
+        shareSpell,
         cast,
         openMenu,
         setTags,
@@ -136,7 +138,7 @@
         </button>
         {#if columns.cantrips}
             {#each groups.autoHeightened as row (row.key)}
-                <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {cast} {openMenu} {setTags} {knownTags} />
+                <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {shareSpell} {cast} {openMenu} {setTags} {knownTags} />
             {/each}
         {/if}
     {/if}
@@ -154,7 +156,7 @@
         </button>
         {#if open}
             {#each section.rows as row (row.key)}
-                <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {cast} {openMenu} {setTags} {knownTags} />
+                <SpellRowView {row} {priority} {ranks} {columns} {openSpell} {shareSpell} {cast} {openMenu} {setTags} {knownTags} />
             {/each}
         {/if}
     {/each}

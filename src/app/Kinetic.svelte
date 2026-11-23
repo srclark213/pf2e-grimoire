@@ -232,6 +232,15 @@
                                     <span class="name">{item.name}</span>
                                     <span class="hint">{infusionHint(item.description)}</span>
                                 </button>
+                                <button
+                                    type="button"
+                                    class="mini"
+                                    aria-label={t("Share")}
+                                    data-tooltip={t("Share")}
+                                    onclick={() => run(() => actions.share(item.id))}
+                                >
+                                    <i class="fa-solid fa-comment"></i>
+                                </button>
                             </li>
                         {/each}
                     </ul>
@@ -489,8 +498,14 @@
         flex-direction: column;
         gap: 0.2rem;
     }
+    .infusions li {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
     .infusion-button {
-        width: 100%;
+        flex: 1;
+        min-width: 0;
         height: auto;
         min-height: 1.8rem;
         display: flex;

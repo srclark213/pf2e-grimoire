@@ -3,6 +3,7 @@ import type { ItemPF2e } from "@item";
 import { flushSync, mount, unmount } from "svelte";
 import { MODULE_ID } from "../constants.ts";
 import { castOption } from "../foundry/cast.ts";
+import { shareSpell } from "../foundry/share.ts";
 import {
     boostStaff,
     boostUsedToday,
@@ -22,7 +23,7 @@ import { loadView, saveView, type TableView } from "../foundry/view-store.ts";
 import { snapshotActor } from "../foundry/snapshot.ts";
 import { aggregateSpells, groupByRank } from "../spellbook/aggregator.ts";
 import { cantripRank } from "../spellbook/labels.ts";
-import type { CastOption } from "../spellbook/model.ts";
+import type { CastOption, SpellRow } from "../spellbook/model.ts";
 import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
 import { normalizePriority } from "../spellbook/priority.ts";
 import Grimoire from "./Grimoire.svelte";
@@ -91,6 +92,7 @@ export class GrimoireApp extends ApplicationV2 {
                 props: {
                     grimoire: this.#state,
                     openSpell: (spellId: string) => this.#openSpell(spellId),
+                    shareSpell: (row: SpellRow) => shareSpell(this.actor, row),
                     cast: (option: CastOption) => castOption(this.actor, option),
                     savePriority: (priority: PriorityGroup[] | null) => this.#savePriority(priority),
                     setFilter: (filter: FilterState) => this.#setFilter(filter),

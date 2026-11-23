@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { CastOption } from "../spellbook/model.ts";
+    import type { CastOption, SpellRow } from "../spellbook/model.ts";
     import type { GrimoireState } from "./grimoire-state.svelte.ts";
     import type { PriorityGroup } from "../spellbook/cast-resolver.ts";
     import type { RankButton } from "../spellbook/rank-buttons.ts";
@@ -15,6 +15,7 @@
     interface Props {
         grimoire: GrimoireState;
         openSpell: (spellId: string) => void;
+        shareSpell: (row: SpellRow) => Promise<void>;
         cast: (option: CastOption) => Promise<void>;
         savePriority: (priority: PriorityGroup[] | null) => Promise<void>;
         setFilter: (filter: FilterState) => void;
@@ -30,7 +31,7 @@
         toggleSection: (key: string) => void;
     }
 
-    const { grimoire, openSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff, staffEditor, setSort, setColumn, toggleSection }: Props = $props();
+    const { grimoire, openSpell, shareSpell, cast, savePriority, setFilter, setCollapsed, setTags, repairWand, prepareStaff, importLegacyStaves, boostStaff, staffEditor, setSort, setColumn, toggleSection }: Props = $props();
 
     const allRows = $derived(grimoire.groups.flatMap((g) => g.rows));
     const visibleRows = $derived(
@@ -138,6 +139,7 @@
                 collapsed={grimoire.view.collapsed}
                 {toggleSection}
                 {openSpell}
+                {shareSpell}
                 {cast}
                 {openMenu}
                 {setTags}

@@ -13,6 +13,8 @@
         ranks: number[];
         columns: ColumnState;
         openSpell: (spellId: string) => void;
+        /** Posts the spell card to chat without casting */
+        shareSpell: (row: SpellRow) => Promise<void>;
         cast: (option: CastOption) => Promise<void>;
         openMenu: (event: MouseEvent, button: RankButton) => void;
         setTags: (spellIds: string[], tags: string[]) => Promise<void>;
@@ -20,7 +22,7 @@
         knownTags: string[];
     }
 
-    const { row, priority, ranks, columns, openSpell, cast, openMenu, setTags, knownTags }: Props = $props();
+    const { row, priority, ranks, columns, openSpell, shareSpell, cast, openMenu, setTags, knownTags }: Props = $props();
 
     const t = (key: string, data?: Record<string, unknown>) => game.i18n.localize(`PF2EGrimoire.${key}`, data);
 
@@ -94,6 +96,15 @@
             {#each row.tags as tag (tag)}
                 <span class="tag">#{tag}</span>
             {/each}
+        </button>
+        <button
+            type="button"
+            class="tag-toggle share"
+            aria-label={t("Share")}
+            data-tooltip={t("Share")}
+            onclick={() => shareSpell(row)}
+        >
+            <i class="fa-solid fa-comment"></i>
         </button>
         {#if row.spellIds.length > 0}
             <button
